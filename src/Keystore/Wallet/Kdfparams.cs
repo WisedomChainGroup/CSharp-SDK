@@ -2,7 +2,7 @@ using System;
 
 namespace C__SDK
 {
-    class Kdfparams
+    public class Kdfparams
     {
         public Kdfparams()
         {
