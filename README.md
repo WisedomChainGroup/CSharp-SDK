@@ -1,12 +1,13 @@
 ## C#SDK
 
-### 创建项目
+### Create project
+
 
 ```json
 dotnet new console -o C#-SDK
 ```
 
-### 创建单元测试
+### Create Unit Tests
 
 ```json
 dotnet new sln -o unit-testing-using-dotnet-test
@@ -19,20 +20,21 @@ dotnet add ./PrimeService.Tests/PrimeService.Tests.csproj reference ./PrimeServi
 dotnet sln add ./PrimeService.Tests/PrimeService.Tests.csproj
 ```
 
-### 运行单元测试
+### Running Unit Tests
 ```json
 dotnet test
 ```
 
-### 删除和添加库
+### Delete and add Libraries
 ```json
 dotnet add package BouncyCastle --version 1.8.5
 
 dotnet remove package BouncyCastle
 ```
 
-### 加密库选择
+### Encryption library selection
 
 * BC  `BouncyCastle`
 * `Argon2`  `Isopoh.Cryptography.Argon2`
 * `AES` `System.Security.Cryptography`
+* `sha3Keccack` `Org.BouncyCastle.Crypto.Digests`

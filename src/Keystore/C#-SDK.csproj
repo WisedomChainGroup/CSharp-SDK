@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="BouncyCastle" Version="1.8.5" />
+    <PackageReference Include="Nethereum" Version="0.0.2.60" />
   </ItemGroup>
 
 </Project>
