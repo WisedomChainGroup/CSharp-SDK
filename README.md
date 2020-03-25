@@ -36,5 +36,5 @@ dotnet remove package BouncyCastle
 
 * BC  `BouncyCastle`
 * `Argon2`  `Isopoh.Cryptography.Argon2`
-* `AES` `System.Security.Cryptography`
+* `AES` `LibAES-CTR`
 * `sha3Keccack` `Org.BouncyCastle.Crypto.Digests`
