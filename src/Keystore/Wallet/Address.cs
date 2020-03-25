@@ -6,9 +6,17 @@ namespace C__SDK
     {
         private PublicKey publicKey;
 
-        public Address(PublicKey pubkey)
+        private String address;
+
+        public Address(PublicKey publicKey)
         {
-            this.publicKey = pubkey;
+            this.address = KeystoreUtils.PubkeyToAddress(publicKey.getBytes());
         }
+
+        public String getAddress()
+        {
+            return address;
+        }
+
     }
 }
