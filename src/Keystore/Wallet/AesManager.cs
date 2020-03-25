@@ -11,6 +11,8 @@ namespace C__SDK
 
         public static AesManager Current { get; } = new AesManager();
 
+        public static String cipher = "aes-256-ctr";
+
         public byte[] Encryptdata(byte[] plain, byte[] key, byte[] iv)
         {
             // Encrypt
