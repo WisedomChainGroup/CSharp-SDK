@@ -6,9 +6,9 @@ namespace C__SDK
     {
         private PublicKey publicKey;
         private PrivateKey privateKey;
-        Org.BouncyCastle.Security.SecureRandom secureRandom = new Org.BouncyCastle.Security.SecureRandom();
+        static Org.BouncyCastle.Security.SecureRandom secureRandom = new Org.BouncyCastle.Security.SecureRandom();
 
-        public KeyPair generateEd25519KeyPair()
+        public static KeyPair generateEd25519KeyPair()
         {
             Org.BouncyCastle.Crypto.Generators.Ed25519KeyPairGenerator kpg = new Org.BouncyCastle.Crypto.Generators.Ed25519KeyPairGenerator();
             kpg.Init(new Ed25519KeyGenerationParameters(secureRandom));
@@ -23,6 +23,15 @@ namespace C__SDK
                 return nkp;
             }
             return generateEd25519KeyPair();
+        }
+
+        public PublicKey GetPublicKey()
+        {
+            return this.publicKey;
+        }
+
+        public PrivateKey GetPrivateKey(){
+            return this.privateKey;
         }
 
     }

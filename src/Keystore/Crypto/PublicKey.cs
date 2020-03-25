@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace C__SDK
 {
     [Serializable]
-    class PublicKey : ISerializable
+    public class PublicKey : ISerializable
     {
         public byte[] k;
         public String algorithm;

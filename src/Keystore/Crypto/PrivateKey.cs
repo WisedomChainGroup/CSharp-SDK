@@ -6,7 +6,7 @@ using System.Linq;
 namespace C__SDK
 {
     [Serializable]
-    class PrivateKey : ISerializable
+    public class PrivateKey : ISerializable
     {
         public byte[] k;
         public String algorithm;
