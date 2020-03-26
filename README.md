@@ -42,4 +42,48 @@ dotnet remove package BouncyCastle
 * `Base58` `SimpleBase`
 
 ### Third party library selection
-* json `Newtonsoft.Json`
+* `json` `Newtonsoft.Json`
+
+### Local method
+
+##### generate Keystore
+
+```c#
+WalletUtility.FromPassword(string password)
+```
+
+##### convert PublicKey to Address
+
+```c#
+KeystoreUtils.PubkeyToAddress(byte[] pubkey)
+```
+
+##### convert PublicKeyHash to Address
+
+```c#
+KeystoreUtils.PubkeyHashToAddress(byte[] publicHash)
+```
+
+##### convert PrivateKey to PublicKey
+
+```C#
+KeystoreUtils.PrivatekeyToPublicKey(string privateKey)
+```
+
+##### convert Address to PublicKeyHash
+
+```C#
+KeystoreUtils.PubkeyHashToAddress(byte[] publicHash)
+```
+
+##### build transfer accounts transaction
+
+```c#
+TxUtility.ClientToTransferAccount(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, string prikeyStr, long nonce)
+fromPubkeyStr：sender publicKey
+toPubkeyHashStr：receiver publicKeyHash
+amount：transfer accounts(must be string)
+prikeyStr: sender privateKey
+nonce：get by node  
+```
+
