@@ -1,10 +1,15 @@
 using System;
 using Nethereum.Hex.HexConvertors.Extensions;
+using System.Numerics;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace C__SDK
 {
     public class KeystoreUtils
     {
+
+        private static String t = "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec";
+
         public static String PubkeyToAddress(byte[] pubkey)
         {
             Sha3Keccack sha3Keccack = Sha3Keccack.Current;
@@ -13,7 +18,7 @@ namespace C__SDK
             return PubkeyHashToAddress(r1);
         }
 
-          public static string PubkeyHashToAddress(byte[] publicHash)
+        public static string PubkeyHashToAddress(byte[] publicHash)
         {
             Sha3Keccack sha3Keccack = Sha3Keccack.Current;
             byte[] r1 = publicHash;
@@ -41,6 +46,27 @@ namespace C__SDK
         public static string AddressToPubkeyHash(string address)
         {
             return AddressToPubkeyHashByteArray(address).ToHex();
+        }
+
+        public static string PrivatekeyToPublicKey(string privateKey)
+        {
+            if (privateKey.Length == 64)
+            {
+                if (new BigInteger(privateKey.HexToByteArray()).CompareTo(new BigInteger(t.HexToByteArray())) > 0)
+                {
+                    return "";
+                }
+            }
+            else if (privateKey.Length == 128)
+            {
+                if (new BigInteger(privateKey.Substring(0, 64).HexToByteArray()).CompareTo(new BigInteger(t.HexToByteArray())) > 0)
+                {
+                    return "";
+                }
+            }
+            Ed25519PrivateKey eprik = new Ed25519PrivateKey(privateKey.HexToByteArray());
+            Ed25519PublicKey epuk = eprik.GeneratePublicKey();
+            return epuk.GetEncoded().ToHex();
         }
 
     }
