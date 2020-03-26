@@ -35,8 +35,24 @@ namespace C__SDK
             return r;
         }
 
-        public static string generateUUID(){
+        public static string generateUUID()
+        {
             return System.Guid.NewGuid().ToString();
         }
+
+
+        public static byte[] prepend(byte[] a, byte b)
+        {
+            if (a == null)
+            {
+                return new byte[] { b };
+            }
+            int length = a.Length;
+            byte[] result = new byte[length + 1];
+            System.Buffer.BlockCopy(a, 0, result, 1, length);
+            result[0] = b;
+            return result;
+        }
+
     }
 }
