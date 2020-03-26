@@ -80,10 +80,10 @@ KeystoreUtils.PubkeyHashToAddress(byte[] publicHash)
 
 ```c#
 TxUtility.ClientToTransferAccount(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, string prikeyStr, long nonce)
-fromPubkeyStr：sender publicKey
-toPubkeyHashStr：receiver publicKeyHash
-amount：transfer accounts(must be string)
-prikeyStr: sender privateKey
-nonce：get by node  
+fromPubkeyStr   sender publicKey
+toPubkeyHashStr receiver publicKeyHash
+amount  transfer accounts(should be new BigDecimal(10000))
+prikeyStr   sender privateKey
+nonce   get by node  
 ```
 
