@@ -38,7 +38,7 @@ dotnet remove package BouncyCastle
 * `Argon2`  `Isopoh.Cryptography.Argon2`
 * `AES` `LibAES-CTR`
 * `sha3Keccack` `Org.BouncyCastle.Crypto.Digests`
-* `RIPEMD160` `System.Security.Cryptography`
+* `RIPEMD160` `DevHawk.RIPEMD160`
 * `Base58` `SimpleBase`
 
 ### Third party library selection
