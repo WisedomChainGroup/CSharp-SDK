@@ -1,6 +1,4 @@
-using System.Text.Json;
 using Nethereum.Hex.HexConvertors.Extensions;
-using System;
 using Newtonsoft.Json;
 
 namespace C__SDK
@@ -52,3 +50,4 @@ namespace C__SDK
 
     }
 }
+
