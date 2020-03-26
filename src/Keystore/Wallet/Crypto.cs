@@ -2,6 +2,7 @@ using System;
 
 namespace C__SDK
 {
+
     public class Crypto
     {
         public Crypto()
@@ -16,7 +17,9 @@ namespace C__SDK
         }
 
         public String cipher;
+
         public String ciphertext;
+
         public Cipherparams cipherparams;
 
         public String getCipher()

@@ -1,5 +1,8 @@
 using System.Text.Json;
 using Nethereum.Hex.HexConvertors.Extensions;
+using System;
+using Newtonsoft.Json;
+
 namespace C__SDK
 {
     public class WalletUtility
@@ -7,11 +10,14 @@ namespace C__SDK
 
         private static int saltLength = 32;
         private static int ivLength = 16;
+
+        private static string newVersion = "2";
+
         public static string FromPassword(string password)
         {
             if (password.Length > 20 || password.Length < 8)
             {
-                return JsonSerializer.Serialize("");
+                return JsonConvert.SerializeObject("");
             }
             else
             {
@@ -29,17 +35,19 @@ namespace C__SDK
                 byte[] cipherPrivKey = aes.Encryptdata(derivedKey, keyPair.GetPrivateKey().getBytes(), iv);
                 Sha3Keccack sha3Keccack = Sha3Keccack.Current;
                 byte[] mac = sha3Keccack.CalculateHash(Utils.Combine(derivedKey, cipherPrivKey));
-                 Crypto crypto = new Crypto(
-                        AesManager.cipher, new string(cipherPrivKey.ToHex()),
-                        new Cipherparams(
-                                new string(iv.ToHex())
-                        )
-                );
+                Crypto crypto = new Crypto(
+                       AesManager.cipher, new string(cipherPrivKey.ToHex()),
+                       new Cipherparams(
+                               new string(iv.ToHex())
+                       )
+               );
                 Kdfparams kdfparams = new Kdfparams(Argon2Manager.memoryCost, Argon2Manager.timeCost, Argon2Manager.parallelism, new string(salt.ToHex()));
                 Address address = new Address(publicKey);
-                //  TODO add ripemd160 after
+                Keystore ks = new Keystore(address.getAddress(), crypto, Utils.generateUUID(),
+                      newVersion, new string(mac.ToHex()), argon2Manager.kdf(), kdfparams
+              );
+                return JsonConvert.SerializeObject(ks);
             }
-            return "";
         }
 
     }

@@ -34,5 +34,9 @@ namespace C__SDK
             Array.Copy(s, start, r, 0, count);
             return r;
         }
+
+        public static string generateUUID(){
+            return System.Guid.NewGuid().ToString();
+        }
     }
 }

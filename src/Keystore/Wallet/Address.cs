@@ -4,6 +4,7 @@ namespace C__SDK
 {
     public class Address
     {
+
         private PublicKey publicKey;
 
         private String address;

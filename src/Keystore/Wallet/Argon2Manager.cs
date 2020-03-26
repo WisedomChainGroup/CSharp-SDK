@@ -30,5 +30,11 @@ namespace C__SDK
             Isopoh.Cryptography.SecureArray.SecureArray<byte> hashA = argon2A.Hash();
             return hashA.Buffer;
         }
+
+        public String kdf()
+        {
+            return "ARGON2id".ToLower();
+        }
+
     }
 }

@@ -17,8 +17,11 @@ namespace C__SDK
         }
 
         public int memoryCost;
+
         public int timeCost;
+
         public int parallelism;
+
         public String salt;
 
         public int getMemoryCost()

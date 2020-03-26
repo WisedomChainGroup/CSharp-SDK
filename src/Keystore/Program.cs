@@ -6,7 +6,8 @@ namespace C__SDK
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            string result = WalletUtility.FromPassword("123456789");
+            Console.WriteLine("----------------"+result);
         }
     }
 }
