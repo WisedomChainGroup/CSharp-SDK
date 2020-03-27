@@ -157,3 +157,14 @@ allowIncrease 1 allowed, 0 not allowed
 nonce   get by node
 info  asset information
 ```
+
+##### build change asset owner transaction
+
+```c#
+TxUtility.CreateSignToDeployforAssetChangeowner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
+fromPubkeyStr   sender publicKey
+tranTxHash transaction hash
+prikeyStr  sender prikeyStr
+nonce   get by node
+newOwner  new owner address
+```

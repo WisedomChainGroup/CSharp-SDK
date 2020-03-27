@@ -11,6 +11,55 @@ namespace C__SDK
 
         private static long rate = 100000000L;
 
+
+        public static string CreateSignToDeployforAssetChangeowner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
+        {
+            byte[] owner;
+            if (newOwner.Equals("0000000000000000000000000000000000000000"))
+            {
+                owner = newOwner.HexToByteArray();
+            }
+            else
+            {
+                owner = KeystoreUtils.AddressToPubkeyHash(newOwner).HexToByteArray();
+            }
+            string rawTransactionHex = CreateCallForRuleAssetChangeOwner(fromPubkeyStr, tranTxHash, nonce, owner);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateCallForRuleAssetChangeOwner(string fromPubkeyStr, string txHash, long nonce, byte[] newOwner)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] hash = txHash.HexToByteArray();
+            byte[] toPubkeyHash = RipemdManager.getHash(hash);
+            byte[] payload = RLPUtils.EncodeList(newOwner);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x00 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateSignToDeployForRuleAsset(string fromPubkeyStr, string prikeyStr, long nonce, string code, BigDecimal offering, string createUser, string owner, int allowIncrease, string info)
         {
             byte[] infoUtf8 = System.Text.Encoding.UTF8.GetBytes(info);
@@ -46,7 +95,7 @@ namespace C__SDK
             byte[] type = new byte[1];
             type[0] = 0x07;
             //Nonce 无符号64位
-            byte[] nonece = NumericsUtils.encodeUint64(nonce + 1);
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
             //签发者公钥哈希 32字节
             byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
             //gas单价
@@ -62,7 +111,7 @@ namespace C__SDK
             //长度
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x00 }, payload);
-            byte[] rawTransaction = Utils.Combine(version, type, nonece, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
             return rawTransaction.ToHex();
         }
 
