@@ -179,3 +179,27 @@ prikeyStr  sender prikeyStr
 nonce   get by node
 amount  increase amount(should be new BigDecimal(100))
 ```
+
+##### build transfer asset accounts transaction
+```c#
+TxUtility.CreateSignToDeployForRuleTransfer(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string from, string to, BigDecimal amount)
+fromPubkeyStr   sender publicKey
+tranTxHash transaction hash
+prikeyStr  sender prikeyStr
+nonce   get by node
+from   publicKey
+to  publicKeyHash
+amount  transfer amount(should be new BigDecimal(100))
+```
+
+##### build deploy multiple rule transaction
+```c#
+TxUtility.CreateMultipleToDeployforRuleFirst(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, int max, int min, List<string> publicKeyHashList)
+fromPubkeyStr   sender publicKey
+prikeyStr  sender prikeyStr
+nonce   get by node
+assetHash asset hash
+max   maximum number of signatures
+min   minimum number of signatures
+publicKeyHashList publicKeyHash list
+```
