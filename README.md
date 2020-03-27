@@ -101,10 +101,10 @@ nonce   get by node
 
 ```c#
 TxUtility.ClientToTransferVote(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string prikeyStr)
-fromPubkeyStr   sender publicKey
-toPubkeyHashStr receiver publicKeyHash
+fromPubkeyStr   initiate a vote publicKey
+toPubkeyHashStr the person being voted publicKeyHash
 amount  vote amount(should be new BigDecimal(100))
-prikeyStr   sender privateKey
+prikeyStr   initiate a vote privateKey
 nonce   get by node
 ```
 
@@ -115,7 +115,30 @@ TxUtility.ClientToTransferVoteWithdraw(string fromPubkeyStr, string toPubkeyHash
 fromPubkeyStr   initiate a vote publicKey
 toPubkeyHashStr the person being voted publicKeyHash
 amount  vote amount(should be new BigDecimal(100))
-prikeyStr   sender privateKey
+prikeyStr   initiate a vote privateKey
 nonce   get by node
 txid  vote transaction id
+```
+
+##### build mortgage transaction
+
+```c#
+TxUtility.ClientToTransferMortgage(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string prikeyStr)
+fromPubkeyStr   initiate a mortgage publicKey
+toPubkeyHashStr the person being mortgaged publicKeyHash
+amount  vote amount(should be new BigDecimal(100))
+prikeyStr   initiate a mortgage privateKey
+nonce   get by node
+```
+
+##### build withdrawal of mortgaging transaction
+
+```c#
+TxUtility.ClientToTransferMortgageWithdraw(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string txid, string prikeyStr)
+fromPubkeyStr   initiate a mortgage publicKey
+toPubkeyHashStr the person being mortgaged publicKeyHash
+amount  mortgage amount(should be new BigDecimal(100))
+prikeyStr   initiate a mortgage privateKey
+nonce   get by node
+txid  mortgage transaction id
 ```
