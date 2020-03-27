@@ -10,6 +10,137 @@ namespace C__SDK
         private static long serviceCharge = 200000L;
 
         private static long rate = 100000000L;
+
+        public static string ClientToTransferVoteWithdraw(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string prikeyStr, string txid)
+        {
+            string rawTransactionHex = CreateRawVoteWithdrawTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce, txid);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateRawVoteWithdrawTransaction(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string txid)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型：投票撤回
+            byte[] type = new byte[1];
+            type[0] = 0x0d;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(20000L, serviceCharge));
+            //转账金额 无符号64位
+            BigDecimal bdAmount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+            byte[] Amount = NumericsUtils.encodeUint64(bdAmount.ToLong());
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = toPubkeyHashStr.HexToByteArray();
+            //payload
+            byte[] payload = txid.HexToByteArray();
+            //长度
+            byte[] payloadlen = NumericsUtils.encodeUint32(payload.Length);
+            byte[] allPayload = Utils.Combine(payloadlen, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string ClientToTransferVote(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string prikeyStr)
+        {
+            string rawTransactionHex = CreateRawVoteTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateRawVoteTransaction(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型：投票
+            byte[] type = new byte[1];
+            type[0] = 0x02;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(20000L, serviceCharge));
+            //转账金额 无符号64位
+            BigDecimal bdAmount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+            byte[] Amount = NumericsUtils.encodeUint64(bdAmount.ToLong());
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = toPubkeyHashStr.HexToByteArray();
+            //长度
+            byte[] allPayload = NumericsUtils.encodeUint32(0);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+
+        public static string ClientToTransferProve(string fromPubkeyStr, long nonce, byte[] payload, string prikeyStr)
+        {
+            string rawTransactionHex = CreateRawProveTransaction(fromPubkeyStr, payload, nonce);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateRawProveTransaction(string fromPubkeyStr, byte[] payload, long nonce)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型：抵押撤回
+            byte[] type = new byte[1];
+            type[0] = 0x03;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //本金 无符号64位
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = new byte[20];
+            //长度
+            byte[] payloadlen = NumericsUtils.encodeUint32(payload.Length);
+            byte[] allPayload = Utils.Combine(payloadlen, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+
+        public static string ClientToTransferAccount(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, string prikeyStr, long nonce)
+        {
+            String rawTransactionHex = CreateRawTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
         public static string CreateRawTransaction(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce)
         {
             byte[] version = new byte[1];
@@ -30,18 +161,7 @@ namespace C__SDK
             return new string(rawTransaction.ToHex());
         }
 
-        public static string ClientToTransferAccount(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, string prikeyStr, long nonce)
-        {
-            String rawTransactionHex = CreateRawTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce);
-            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
-            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
-            String txHash = hash.ToHex();
-            String traninfo = signRawBasicTransaction.ToHex();
-            APIResult result = new APIResult(txHash, traninfo);
-            return JsonConvert.SerializeObject(result);
-        }
-
-         public static String SignRawBasicTransaction(String rawTransactionHex, String prikeyStr)
+        public static String SignRawBasicTransaction(String rawTransactionHex, String prikeyStr)
         {
             byte[] rawTransaction = rawTransactionHex.HexToByteArray();
             byte[] privkey = prikeyStr.HexToByteArray();

@@ -82,8 +82,40 @@ KeystoreUtils.PubkeyHashToAddress(byte[] publicHash)
 TxUtility.ClientToTransferAccount(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, string prikeyStr, long nonce)
 fromPubkeyStr   sender publicKey
 toPubkeyHashStr receiver publicKeyHash
-amount  transfer accounts(should be new BigDecimal(10000))
+amount  transfer amount(should be new BigDecimal(100))
 prikeyStr   sender privateKey
 nonce   get by node  
 ```
 
+##### build prove transaction
+
+```c#
+TxUtility.ClientToTransferProve(string fromPubkeyStr, long nonce, byte[] payload, string prikeyStr)
+fromPubkeyStr   sender publicKey
+payload recording somethings
+prikeyStr   sender privateKey
+nonce   get by node  
+```
+
+##### build vote transaction
+
+```c#
+TxUtility.ClientToTransferVote(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string prikeyStr)
+fromPubkeyStr   sender publicKey
+toPubkeyHashStr receiver publicKeyHash
+amount  vote amount(should be new BigDecimal(100))
+prikeyStr   sender privateKey
+nonce   get by node
+```
+
+##### build withdrawal of voting transaction
+
+```c#
+TxUtility.ClientToTransferVoteWithdraw(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string prikeyStr, string txid)
+fromPubkeyStr   initiate a vote publicKey
+toPubkeyHashStr the person being voted publicKeyHash
+amount  vote amount(should be new BigDecimal(100))
+prikeyStr   sender privateKey
+nonce   get by node
+txid  vote transaction id
+```
