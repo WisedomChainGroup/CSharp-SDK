@@ -1,12 +1,10 @@
-using System;
-using System.IO;
 using System.Security.Cryptography;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Xunit;
 
 namespace C__SDK
 {
-    public class AESTestcs
+    public class AESTest
     {
         [Fact]
         public void TestAESWithEverything()

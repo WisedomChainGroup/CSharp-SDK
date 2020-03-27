@@ -11,6 +11,15 @@ namespace C__SDK
 
         private static long rate = 100000000L;
 
+        private Tuple<bool, string> JudgeBigDecimalIsValid(BigDecimal value)
+        {
+            if (value.CompareTo(BigDecimal.Zero) <= 0 || value.CompareTo(new BigDecimal(long.MaxValue)) > 0)
+            {
+                return new Tuple<bool, string>(false, "offering must be a positive number");
+            }
+            return new Tuple<bool, string>(true, "offering is ok");
+        }
+
         public static string ClientToTransferMortgageWithdraw(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string txid, string prikeyStr)
         {
             string rawTransactionHex = CreateRawMortgageWithdrawTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce, txid);
