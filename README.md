@@ -168,3 +168,14 @@ prikeyStr  sender prikeyStr
 nonce   get by node
 newOwner  new owner address
 ```
+
+##### build increase asset transaction
+
+```c#
+TxUtility.CreateSignToDeployForRuleAssetIncreased(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, BigDecimal amount)
+fromPubkeyStr   sender publicKey
+tranTxHash transaction hash
+prikeyStr  sender prikeyStr
+nonce   get by node
+amount  increase amount(should be new BigDecimal(100))
+```
