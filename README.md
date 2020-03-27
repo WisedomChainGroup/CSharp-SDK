@@ -142,3 +142,18 @@ prikeyStr   initiate a mortgage privateKey
 nonce   get by node
 txid  mortgage transaction id
 ```
+
+##### build deploy asset transaction
+
+```c#
+TxUtility.CreateSignToDeployForRuleAsset(string fromPubkeyStr, string prikeyStr, long nonce, string code, BigDecimal offering, string createUser, string owner, int allowIncrease, string info)
+fromPubkeyStr   sender publicKey
+prikeyStr sender prikeyStr
+code  asset code
+offering   opening issuance limit
+createUser create ruler publicKey
+owner owner address
+allowIncrease 1 allowed, 0 not allowed
+nonce   get by node
+info  asset information
+```

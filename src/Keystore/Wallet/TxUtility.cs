@@ -11,7 +11,62 @@ namespace C__SDK
 
         private static long rate = 100000000L;
 
-        private Tuple<bool, string> JudgeBigDecimalIsValid(BigDecimal value)
+        public static string CreateSignToDeployForRuleAsset(string fromPubkeyStr, string prikeyStr, long nonce, string code, BigDecimal offering, string createUser, string owner, int allowIncrease, string info)
+        {
+            byte[] infoUtf8 = System.Text.Encoding.UTF8.GetBytes(info);
+            string rawTransactionHex = CreateDeployForRuleAsset(fromPubkeyStr, nonce, code, offering, offering, createUser.HexToByteArray(), KeystoreUtils.AddressToPubkeyHash(owner).HexToByteArray(), allowIncrease, infoUtf8);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateDeployForRuleAsset(string fromPubkeyStr, long nonce, String code, BigDecimal offering, BigDecimal totalAmount, byte[] createUser, byte[] owner, int allowIncrease, byte[] info)
+        {
+            offering = BigDecimal.Multiply(offering, new BigDecimal(rate));
+            totalAmount = BigDecimal.Multiply(totalAmount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleOffering = JudgeBigDecimalIsValid(offering);
+            if (!tupleOffering.Item1)
+            {
+                return tupleOffering.Item2;
+            }
+            Tuple<bool, string> tupleTotalAmount = JudgeBigDecimalIsValid(totalAmount);
+            if (!tupleTotalAmount.Item1)
+            {
+                return tupleTotalAmount.Item2;
+            }
+
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x07;
+            //Nonce 无符号64位
+            byte[] nonece = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 32字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            String toPubkeyHashStr = "0000000000000000000000000000000000000000";
+            byte[] toPubkeyHash = toPubkeyHashStr.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeList(code.ToBytesForRLPEncoding(), offering.ToLong().ToBytesForRLPEncoding(), totalAmount.ToLong().ToBytesForRLPEncoding(), createUser, owner, allowIncrease.ToBytesForRLPEncoding(), info);
+            //长度
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x00 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, nonece, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        private static Tuple<bool, string> JudgeBigDecimalIsValid(BigDecimal value)
         {
             if (value.CompareTo(BigDecimal.Zero) <= 0 || value.CompareTo(new BigDecimal(long.MaxValue)) > 0)
             {
