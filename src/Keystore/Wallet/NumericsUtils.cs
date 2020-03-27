@@ -1,5 +1,5 @@
 using System;
-
+using System.Linq;
 namespace C__SDK
 {
 
@@ -8,22 +8,18 @@ public class NumericsUtils
 {
     public static byte[] encodeUint64(long l)
     {
-        byte[] temp = BitConverter.GetBytes(l);
-        Array.Reverse(temp);
-        return temp;
+        return BitConverter.GetBytes(l).Reverse().ToArray();
     }
 
     public static byte[] encodeUint32(int l)
     {
-          byte[] temp = BitConverter.GetBytes(l);
-        Array.Reverse(temp);
-        return temp;
+        return BitConverter.GetBytes(l).Reverse().ToArray();
     }
 
     public static long decodeUint32(byte[] data)
     {
-        Array.Reverse(data);
-        return BitConverter.ToUInt32(data, 0);
+
+        return BitConverter.ToUInt32(data.Reverse().ToArray(), 0);
     }
 
 }

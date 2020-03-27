@@ -1,7 +1,4 @@
 using System;
-using System.IO;
-using System.Security.Cryptography;
-using Nethereum.Hex.HexConvertors.Extensions;
 using CS_AES_CTR;
 
 namespace C__SDK
