@@ -69,7 +69,7 @@ namespace C__SDK
             byte[] signull = new byte[64];
             //接收者公钥哈希
             byte[] toPubkeyHash = "0000000000000000000000000000000000000000".HexToByteArray();
-            byte[] payload = RLPUtils.EncodeList(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), RLPUtils.EncodeList(pubList.ToArray()), RLPUtils.EncodeList(signatures.ToArray()), RLPUtils.EncodeList(publicKeyHashList.ToArray()));
+            byte[] payload = RLPUtils.EncodeList(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), pubList, signatures, publicKeyHashList);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
             byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);
