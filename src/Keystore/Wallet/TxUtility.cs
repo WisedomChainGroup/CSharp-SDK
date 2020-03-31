@@ -14,6 +14,316 @@ namespace C__SDK
 
         private static long rate = 100000000L;
 
+        public static string CreateHashHeightBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal blockHeight)
+        {
+            string newHashResult = hashResult.Replace(" ", "");
+            if (newHashResult.Equals(""))
+            {
+                JObject json = new JObject { { "message", "hash result can not be null" } };
+                return json.ToString();
+            }
+            byte[] hashResultUtf8 = System.Text.Encoding.UTF8.GetBytes(newHashResult);
+            if (hashResultUtf8.Length > 512 || hashResultUtf8.Length <= 0)
+            {
+                JObject json = new JObject { { "message", "hash result length is too large or too short" } };
+                return json.ToString();
+            }
+            string rawTransactionHex = HashHeightBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateHash(hashResultUtf8), blockHeight);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string HashHeightBlockTransferForDeploy(string fromPubkeyStr, string txHash, long nonce, BigDecimal amount, byte[] hashResult, BigDecimal blockHeight)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            if (blockHeight.CompareTo(BigDecimal.Zero) < 0)
+            {
+                JObject json = new JObject { { "message", "block height must be positive long number" } };
+                return json.ToString();
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            //构造payload
+            byte[] payload = RLP.EncodeList(amount.ToLong().ToBytesForRLPEncoding(), hashResult, blockHeight.ToLong().ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x06 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateHashHeightBlockGetForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, string transferHash, string originText)
+        {
+            if (originText.Equals(""))
+            {
+                JObject json = new JObject { { "message", "origin test can not be null" } };
+                return json.ToString();
+            }
+            string newOriginText = originText.Replace(" ", "");
+            byte[] originTextUtf8 = System.Text.Encoding.UTF8.GetBytes(newOriginText);
+            if (originTextUtf8.Length > 512 || originTextUtf8.Length <= 0)
+            {
+                JObject json = new JObject { { "message", "origin text length is too large or too short" } };
+                return json.ToString();
+            }
+            string rawTransactionHex = HashHeightBlockGetForDeploy(fromPubkeyStr, txGetHash, nonce, transferHash.HexToByteArray(), newOriginText);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+
+        public static string HashHeightBlockGetForDeploy(string fromPubkeyStr, string txHash, long nonce, byte[] transferHash, string originText)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLP.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x07 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateHashHeightBlockForDeploy(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, string pubkeyHash)
+        {
+            byte[] hash;
+            if (assetHash.Equals("0000000000000000000000000000000000000000"))
+            {
+                hash = assetHash.HexToByteArray();
+            }
+            else
+            {
+                hash = RipemdManager.getHash(assetHash.HexToByteArray());
+            }
+            string rawTransactionHex = HashHeightBlockForDeploy(fromPubkeyStr, nonce, assetHash.HexToByteArray(), pubkeyHash.HexToByteArray());
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string HashHeightBlockForDeploy(string fromPubkeyStr, long nonce, byte[] assetHash, byte[] pubkeyHash)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X07;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希,填0
+            byte[] toPubkeyHash = "0000000000000000000000000000000000000000".HexToByteArray();
+            byte[] payload = RLP.EncodeList(assetHash, pubkeyHash);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateHashTimeBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, String txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal timestamp)
+        {
+            string newHashResult = hashResult.Replace(" ", "");
+            if (newHashResult.Equals(""))
+            {
+                JObject json = new JObject { { "message", "hash result can not be null" } };
+                return json.ToString();
+            }
+            byte[] hashResultUtf8 = System.Text.Encoding.UTF8.GetBytes(newHashResult);
+            if (hashResultUtf8.Length > 512 || hashResultUtf8.Length <= 0)
+            {
+                JObject json = new JObject { { "message", "hash result length is too large or too short" } };
+                return json.ToString();
+            }
+            string rawTransactionHex = HashTimeBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateHash(hashResultUtf8), timestamp);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string HashTimeBlockTransferForDeploy(string fromPubkeyStr, string txHash, long nonce, BigDecimal amount, byte[] hashResult, BigDecimal timestamp)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希,填0
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeList(amount.ToLong().ToBytesForRLPEncoding(), hashResult, timestamp.ToLong().ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x04 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateHashTimeBlockGetForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, string transferHash, string originText)
+        {
+            if (originText.Equals(""))
+            {
+                JObject json = new JObject { { "message", "origin test can not be null" } };
+                return json.ToString();
+            }
+            string newOriginText = originText.Replace(" ", "");
+            byte[] originTextUtf8 = System.Text.Encoding.UTF8.GetBytes(newOriginText);
+            if (originTextUtf8.Length > 512 || originTextUtf8.Length <= 0)
+            {
+                JObject json = new JObject { { "message", "origin text length is too large or too short" } };
+                return json.ToString();
+            }
+            string rawTransactionHex = HashTimeBlockGetForDeploy(fromPubkeyStr, txGetHash, nonce, transferHash.HexToByteArray(), newOriginText);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string HashTimeBlockGetForDeploy(string fromPubkeyStr, string txHash, long nonce, byte[] transferHash, string originText)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //部署事务的事务哈希
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x05 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateHashTimeBlockForDeploy(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, string pubkeyHash)
+        {
+            byte[] hash;
+            if (assetHash.Equals("0000000000000000000000000000000000000000"))
+            {
+                hash = assetHash.HexToByteArray();
+            }
+            else
+            {
+                hash = RipemdManager.getHash(assetHash.HexToByteArray());
+            }
+            string rawTransactionHex = HashTimeBlockForDeploy(fromPubkeyStr, nonce, hash, pubkeyHash.HexToByteArray());
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string HashTimeBlockForDeploy(string fromPubkeyStr, long nonce, byte[] assetHash, byte[] pubkeyHash)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X07;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希,填0
+            String toPubkeyHashStr = "0000000000000000000000000000000000000000";
+            byte[] toPubkeyHash = toPubkeyHashStr.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeList(assetHash, pubkeyHash);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x02 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateMultiSignatureToDeployForRuleSignSplice(string prikeyStr, string pubkeyFirstSign, string fromPubkey, string txHashRule, long nonce, string signFirst, string pubkeyOther, string signOther, int type)
         {
             byte[] payload = ParsePayloadFromSignRawBasicTransaction(signFirst.HexToByteArray());

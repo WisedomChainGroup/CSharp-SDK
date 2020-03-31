@@ -262,3 +262,69 @@ pubkeyOther CreateMultiSignatureToDeployForRuleOther return pubkeyOther
 signOther CreateMultiSignatureToDeployForRuleOther return signOther
 type 1 one to more 2 more to one 3 more to more
 ```
+
+##### build hash time block transaction
+```c#
+TxUtility.CreateHashTimeBlockForDeploy(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, string pubkeyHash)
+fromPubkeyStr sender publicKey
+prikeyStr sender privatekey
+nonce   get by node
+assetHash   asset hash
+pubkeyHash publicHashKey
+```
+
+##### build get asset time block transaction
+```c#
+TxUtility.CreateHashTimeBlockGetForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, string transferHash, string originText)
+fromPubkeyStr sender publicKey
+prikeyStr sender privatekey
+txGetHash transaction hash
+nonce   get by node
+transferHash   transfer hash
+originText origin text
+```
+
+##### build transfer asset time block transaction
+```c#
+TxUtility.CreateHashTimeBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, String txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal timestamp)
+fromPubkeyStr sender publicKey
+prikeyStr sender privatekey
+txGetHash transaction hash
+nonce   get by node
+amount  transfer amount(should be new BigDecimal(100))
+hashResult   origin text
+timestamp timestamp
+```
+
+##### build hash height block transaction
+```c#
+TxUtility.CreateHashHeightBlockForDeploy(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, string pubkeyHash)
+fromPubkeyStr sender publicKey
+prikeyStr sender privatekey
+nonce   get by node
+assetHash   asset hash
+pubkeyHash publicHashKey
+```
+
+##### build hash height get asset block transaction
+```c#
+TxUtility.CreateHashHeightBlockGetForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, string transferHash, string originText)
+fromPubkeyStr sender publicKey
+prikeyStr sender privatekey
+txGetHash transaction hash
+nonce   get by node
+transferHash   transfer hash
+originText origin text
+```
+
+##### build hash height transfer asset block transaction
+```c#
+TxUtility.CreateHashHeightBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal blockHeight)
+fromPubkeyStr sender publicKey
+prikeyStr sender privatekey
+txGetHash transaction hash
+nonce   get by node
+amount  transfer amount(should be new BigDecimal(100))
+hashResult   origin text
+blockHeight block height
+```
