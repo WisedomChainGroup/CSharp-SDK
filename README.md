@@ -194,7 +194,7 @@ amount  transfer amount(should be new BigDecimal(100))
 
 ##### build deploy multiple rule transaction
 ```c#
-TxUtility.CreateMultipleToDeployforRuleFirst(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, int max, int min, List<string> publicKeyHashList)
+TxUtility.CreateMultipleToDeployForRuleFirst(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, int max, int min, List<string> publicKeyHashList)
 fromPubkeyStr   sender publicKey
 prikeyStr  sender prikeyStr
 nonce   get by node
@@ -202,4 +202,26 @@ assetHash asset hash
 max   maximum number of signatures
 min   minimum number of signatures
 publicKeyHashList publicKeyHash list
+```
+
+##### build deploy multiple rule (other signature)transaction
+```c#
+TxUtility.CreateMultipleToDeployForRuleOther(string fromPubkeyStr, string pubFirstSign, string prikeyStr, bool isPutSign)
+fromPubkeyStr   sender publicKey
+pubFirstSign  first sign
+prikeyStr   prikeyStr
+assetHash asset hash
+isPutSign put in signature or not
+```
+
+##### build deploy multiple rule (splice signature)transaction
+```c#
+TxUtility.CreateMultipleToDeployForRuleSignSplice(string prikeyStr, string pubFirstSign, string frompubkey, long nonce, string signFirst, string pubkeyOther, string signOther)
+frompubkey   sender publicKey
+pubFirstSign  CreateMultipleToDeployForRuleFirst return pubFirstSign
+prikeyStr   prikeyStr
+nonce   get by node
+signFirst  CreateMultipleToDeployForRuleFirst return signFirst
+pubkeyOther CreateMultipleToDeployForRuleOther return pubkeyOther
+signOther CreateMultipleToDeployForRuleOther return signOther
 ```

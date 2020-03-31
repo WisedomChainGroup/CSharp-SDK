@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Nethereum.Hex.HexConvertors.Extensions;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace C__SDK
 {
@@ -13,7 +14,126 @@ namespace C__SDK
 
         private static long rate = 100000000L;
 
-        public static string CreateMultipleToDeployforRuleFirst(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, int max, int min, List<string> publicKeyHashList)
+        public static string CreateMultipleToDeployForRuleSignSplice(string prikeyStr, string pubFirstSign, string frompubkey, long nonce, string signFirst, string pubkeyOther, string signOther)
+        {
+            byte[] sign = ParseSignatureFromSignRawBasicTransaction(signOther.HexToByteArray());
+            Ed25519PublicKey ed25519PublicKey = new Ed25519PublicKey(pubkeyOther.HexToByteArray());
+            bool isValid = ed25519PublicKey.verify(pubFirstSign.HexToByteArray(), sign);
+            if (!isValid)
+            {
+                JObject json = new JObject { { "message", "others sign is wrong" } };
+                return json.ToString();
+            }
+            byte[] payload = ParsePayloadFromSignRawBasicTransaction(signFirst.HexToByteArray());
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            Multiple multiple = RLPUtils.DecodeMultiple(newPayload);
+            byte[] assetHash = multiple.assetHash;
+            int max = multiple.max;
+            int min = multiple.min;
+            List<byte[]> pubHashList = multiple.pubkeyHashList;
+
+            List<byte[]> publicKeyList = new List<byte[]>();
+            if (multiple.pubList.ToArray().Length == 0)
+            {
+                publicKeyList.Add(frompubkey.HexToByteArray());
+            }
+            else
+            {
+                for (int i = 0; i < multiple.pubList.ToArray().Length; i++)
+                {
+                    publicKeyList.Add(multiple.pubList[i]);
+                }
+            }
+            if (!frompubkey.Equals(pubkeyOther))
+            {
+                publicKeyList.Add(pubkeyOther.HexToByteArray());
+            }
+            List<byte[]> list = multiple.signatures;
+            list.Add(sign);
+            byte[] rawTransactionHex = CreateMultipleForRuleSplice(frompubkey, nonce, assetHash, max, min, publicKeyList, list, pubHashList).HexToByteArray();
+            string txHash = Utils.CopyByteArray(rawTransactionHex, 1, 32).ToHex();
+            string traninfo = rawTransactionHex.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateMultipleForRuleSplice(string fromPubkeyStr, long nonce, byte[] assetHash, int max, int min, List<byte[]> pubList, List<byte[]> signatures, List<byte[]> pubkeyHashList)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x07;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAccount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            String toPubkeyHashStr = "0000000000000000000000000000000000000000";
+            byte[] toPubkeyHash = toPubkeyHashStr.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeMultiple(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), pubList, signatures, pubkeyHashList);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateMultipleToDeployForRuleOther(string fromPubkeyStr, string pubFirstSign, string prikeyStr, bool isPutSign)
+        {
+            byte[] signRawBasicTransaction = SignRawBasicTransactionByIsSign(pubFirstSign, prikeyStr, isPutSign).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            JObject json = new JObject { { "pubkeyOther", fromPubkeyStr }, { "signOther", traninfo }, { "data", txHash }, { "message", traninfo } };
+            return json.ToString();
+        }
+
+        private static string SignRawBasicTransactionByIsSign(string rawTransactionHex, string prikeyStr, bool isPutSign)
+        {
+            byte[] rawTransaction = rawTransactionHex.HexToByteArray();
+            //私钥字节数组
+            byte[] privkey = prikeyStr.HexToByteArray();
+            //version
+            byte[] version = Utils.CopyByteArray(rawTransaction, 0, 1);
+            //type
+            byte[] type = Utils.CopyByteArray(rawTransaction, 1, 1);
+            //nonce
+            byte[] nonce = Utils.CopyByteArray(rawTransaction, 2, 8);
+            //from
+            byte[] from = Utils.CopyByteArray(rawTransaction, 10, 32);
+            //gasprice
+            byte[] gasprice = Utils.CopyByteArray(rawTransaction, 42, 8);
+            //amount
+            byte[] amount = Utils.CopyByteArray(rawTransaction, 50, 8);
+            //signo
+            byte[] signo = Utils.CopyByteArray(rawTransaction, 58, 64);
+            //to
+            byte[] to = Utils.CopyByteArray(rawTransaction, 122, 20);
+            //payloadlen
+            byte[] payloadlen = Utils.CopyByteArray(rawTransaction, 142, 4);
+            //payload
+            byte[] payload = Utils.CopyByteArray(rawTransaction, 146, (int)NumericsUtils.decodeUint32(payloadlen));
+            byte[] RawTransactionNoSign = Utils.Combine(version, type, nonce, from, gasprice, amount, signo, to, payloadlen, payload);
+            byte[] RawTransactionNoSig = Utils.Combine(version, type, nonce, from, gasprice, amount);
+            //签名数据
+            byte[] sig = new byte[64];
+            if (isPutSign)
+            {
+                sig = new Ed25519PrivateKey(privkey).sign(RawTransactionNoSign);
+            }
+            Sha3Keccack sha3Keccack = Sha3Keccack.Current;
+            byte[] transha = sha3Keccack.CalculateHash(Utils.Combine(RawTransactionNoSig, sig, to, payloadlen, payload));
+            byte[] signRawBasicTransaction = Utils.Combine(version, transha, type, nonce, from, gasprice, amount, sig, to, payloadlen, payload);
+            return signRawBasicTransaction.ToHex();
+        }
+
+        public static string CreateMultipleToDeployForRuleFirst(string fromPubkeyStr, string prikeyStr, long nonce, string assetHash, int max, int min, List<string> publicKeyHashList)
         {
             byte[] hash;
             if (assetHash.Equals("0000000000000000000000000000000000000000"))
@@ -32,8 +152,8 @@ namespace C__SDK
             byte[] signRawBasicTransactionSign = SignRawBasicTransaction(rawTransactionHexFirstSign, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransactionSign, 1, 32).ToHex();
             string traninfo = signRawBasicTransaction.ToHex();
-            APIResult result = new APIResult(txHash, traninfo);
-            return JsonConvert.SerializeObject(result);
+            JObject json = new JObject { { "pubkeyFirstSign", rawTransactionHex }, { "pubkeyFirst", fromPubkeyStr }, { "signFirst", traninfo }, { "data", txHash }, { "message", traninfo } };
+            return json.ToString();
         }
 
         private static byte[] ParseSignatureFromSignRawBasicTransaction(byte[] msg)
@@ -47,6 +167,23 @@ namespace C__SDK
             msg = Utils.CopyByteArray(msg, 8, msg.Length - 8);
             //sig
             return Utils.CopyByteArray(msg, 0, 64);
+        }
+
+        private static byte[] ParsePayloadFromSignRawBasicTransaction(byte[] msg)
+        {
+            msg = Utils.CopyByteArray(msg, 1, msg.Length - 1);
+            msg = Utils.CopyByteArray(msg, 32, msg.Length - 32);
+            msg = Utils.CopyByteArray(msg, 1, msg.Length - 1);
+            msg = Utils.CopyByteArray(msg, 8, msg.Length - 8);
+            msg = Utils.CopyByteArray(msg, 32, msg.Length - 32);
+            msg = Utils.CopyByteArray(msg, 8, msg.Length - 8);
+            msg = Utils.CopyByteArray(msg, 8, msg.Length - 8);
+            //sig
+            msg = Utils.CopyByteArray(msg, 0, msg.Length - 64);
+            msg = Utils.CopyByteArray(msg, 0, msg.Length - 20);
+            byte[] payloadLen = Utils.CopyByteArray(msg, 0, 4);
+            msg = Utils.CopyByteArray(msg, 0, msg.Length - 4);
+            return Utils.CopyByteArray(msg, 0, (int)NumericsUtils.decodeUint32(payloadLen));
         }
 
         public static string CreateMultipleForRuleFirst(string fromPubkeyStr, long nonce, byte[] assetHash, int max, int min, List<byte[]> pubList, List<byte[]> signatures, List<byte[]> publicKeyHashList)
@@ -69,7 +206,7 @@ namespace C__SDK
             byte[] signull = new byte[64];
             //接收者公钥哈希
             byte[] toPubkeyHash = "0000000000000000000000000000000000000000".HexToByteArray();
-            byte[] payload = RLPUtils.EncodeList(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), pubList, signatures, publicKeyHashList);
+            byte[] payload = RLPUtils.EncodeMultiple(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), pubList, signatures, publicKeyHashList);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
             byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);

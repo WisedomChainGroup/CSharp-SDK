@@ -1,5 +1,6 @@
 using System;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
 namespace C__SDK
 {
     public class Ed25519PublicKey
@@ -18,6 +19,14 @@ namespace C__SDK
         public byte[] GetEncoded()
         {
             return this.publicKey.GetEncoded();
+        }
+
+        public bool verify(byte[] msg, byte[] signature)
+        {
+            var verifier = new Ed25519Signer();
+            verifier.Init(false, publicKey);
+            verifier.BlockUpdate(msg, 0, msg.Length);
+            return verifier.VerifySignature(signature);
         }
 
     }
