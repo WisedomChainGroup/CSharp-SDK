@@ -208,7 +208,7 @@ publicKeyHashList publicKeyHash list
 ```c#
 TxUtility.CreateMultipleToDeployForRuleOther(string fromPubkeyStr, string pubFirstSign, string prikeyStr, bool isPutSign)
 fromPubkeyStr   sender publicKey
-pubFirstSign  first sign
+pubFirstSign  CreateMultipleToDeployForRuleFirst return pubFirstSign
 prikeyStr   prikeyStr
 assetHash asset hash
 isPutSign put in signature or not
@@ -224,4 +224,41 @@ nonce   get by node
 signFirst  CreateMultipleToDeployForRuleFirst return signFirst
 pubkeyOther CreateMultipleToDeployForRuleOther return pubkeyOther
 signOther CreateMultipleToDeployForRuleOther return signOther
+```
+
+##### build deploy transfer multiple rule transaction
+```c#
+TxUtility.CreateMultiSignatureToDeployForRuleFirst(string fromPubkeyStr, string prikeyStr, string txHashRule, long nonce, int origin, int dest, List<string> signatures, string to, BigDecimal value, List<string> pubkeyHashList)
+fromPubkeyStr   sender publicKey
+prikeyStr  sender prikeyStr
+txHashRule transaction hash
+nonce   get by node
+origin origin account type 1 multiple address 0 common address
+dest dest account type  1 multiple address 0 common address
+signatures   signature list
+to   common address corresponding to pubkeyHash or multiple address corresponding to transaction hash
+publicKeyHashList publicKeyHash list
+```
+
+##### build deploy transfer multiple rule (other signature)transaction
+```c#
+TxUtility.CreateMultiSignatureToDeployForRuleOther(string fromPubkeyStr, string pubkeyFirstSign, string prikeyStr, bool isPutSign)
+fromPubkeyStr   sender publicKey
+pubkeyFirstSign  CreateMultiSignatureToDeployForRuleFirst return pubkeyFirstSign
+prikeyStr   prikeyStr
+isPutSign put in signature or not
+```
+
+##### build deploy transfer multiple rule (splice signature)transaction
+```c#
+TxUtility.CreateMultiSignatureToDeployForRuleSignSplice(string prikeyStr, string pubkeyFirstSign, string fromPubkey, string txHashRule, long nonce, string signFirst, string pubkeyOther, string signOther, int type)
+pubFirstSign  CreateMultiSignatureToDeployForRuleFirst return pubFirstSign
+prikeyStr   prikeyStr
+fromPubkey sender publicKey
+txHashRule transaction hash
+nonce   get by node
+signFirst  CreateMultiSignatureToDeployForRuleFirst return signFirst
+pubkeyOther CreateMultiSignatureToDeployForRuleOther return pubkeyOther
+signOther CreateMultiSignatureToDeployForRuleOther return signOther
+type 1 one to more 2 more to one 3 more to more
 ```

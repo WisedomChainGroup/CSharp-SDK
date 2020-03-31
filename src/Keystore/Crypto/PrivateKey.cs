@@ -9,10 +9,10 @@ namespace C__SDK
     public class PrivateKey : ISerializable
     {
         public byte[] k;
-        public String algorithm;
-        public String format;
+        public string algorithm;
+        public string format;
 
-        private static String t = "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec";
+        private static string t = "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec";
 
         public PrivateKey()
         {
@@ -24,7 +24,7 @@ namespace C__SDK
             this.k = k;
         }
 
-        public PrivateKey(byte[] k, String algorithm, String format)
+        public PrivateKey(byte[] k, string algorithm, string format)
         {
             this.k = k;
             this.algorithm = algorithm;
@@ -58,12 +58,12 @@ namespace C__SDK
             return this.getBytes();
         }
 
-        public String getAlgorithm()
+        public string getAlgorithm()
         {
             return algorithm;
         }
 
-        public String getFormat()
+        public string getFormat()
         {
             return format;
         }

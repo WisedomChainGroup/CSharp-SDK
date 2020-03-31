@@ -7,8 +7,8 @@ namespace C__SDK
     public class PublicKey : ISerializable
     {
         public byte[] k;
-        public String algorithm;
-        public String format;
+        public string algorithm;
+        public string format;
 
         public PublicKey()
         {
@@ -20,7 +20,7 @@ namespace C__SDK
             this.k = k;
         }
 
-        public PublicKey(byte[] k, String algorithm, String format)
+        public PublicKey(byte[] k, string algorithm, string format)
         {
             this.k = k;
             this.algorithm = algorithm;
@@ -54,12 +54,12 @@ namespace C__SDK
             return this.getBytes();
         }
 
-        public String getAlgorithm()
+        public string getAlgorithm()
         {
             return algorithm;
         }
 
-        public String getFormat()
+        public string getFormat()
         {
             return format;
         }

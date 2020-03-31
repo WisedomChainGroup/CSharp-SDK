@@ -14,6 +14,188 @@ namespace C__SDK
 
         private static long rate = 100000000L;
 
+        public static string CreateMultiSignatureToDeployForRuleSignSplice(string prikeyStr, string pubkeyFirstSign, string fromPubkey, string txHashRule, long nonce, string signFirst, string pubkeyOther, string signOther, int type)
+        {
+            byte[] payload = ParsePayloadFromSignRawBasicTransaction(signFirst.HexToByteArray());
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            MultTransfer multTransfer = RLPUtils.DecodeMultTransfer(newPayload);
+            List<byte[]> signatures = multTransfer.signatures;
+            int origin = multTransfer.origin;
+            int dest = multTransfer.dest;
+            byte[] to = multTransfer.to;
+            long value = multTransfer.value;
+            //公钥数组
+            List<byte[]> fromList = new List<byte[]>();
+            if (multTransfer.from.ToArray().Length == 0)
+            {
+                fromList.Add(fromPubkey.HexToByteArray());
+            }
+            else
+            {
+                for (int i = 0; i < multTransfer.from.ToArray().Length; i++)
+                {
+                    fromList.Add(multTransfer.from[i]);
+                }
+            }
+            if (!fromPubkey.Equals(pubkeyOther))
+            {
+                fromList.Add(pubkeyOther.HexToByteArray());
+            }
+            List<byte[]> pubkeyHashList = multTransfer.pubkeyHashList;
+            string rawTransactionHex;
+            if (type == 1)
+            {
+                rawTransactionHex = CreateMultiSignatureForTransferSplice(fromPubkey, txHashRule, nonce, origin, dest, fromList, signatures, to, new BigDecimal(value), pubkeyHashList);
+            }
+            else if (type == 2 || type == 3)
+            {
+                byte[] sign = ParseSignatureFromSignRawBasicTransaction(signOther.HexToByteArray());
+                Ed25519PublicKey ed25519PublicKey = new Ed25519PublicKey(pubkeyOther.HexToByteArray());
+                bool isValid = ed25519PublicKey.verify(pubkeyFirstSign.HexToByteArray(), sign);
+                if (!isValid)
+                {
+                    JObject json = new JObject { { "message", "others sign is wrong" } };
+                    return json.ToString();
+                }
+                signatures.Add(sign);
+                rawTransactionHex = CreateMultiSignatureForTransferSplice(fromPubkey, txHashRule, nonce, origin, dest, fromList, signatures, to, new BigDecimal(value), pubkeyHashList);
+            }
+            else
+            {
+                JObject json = new JObject { { "message", "type must be 1, 2, 3" } };
+                return json.ToString();
+            }
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+        public static string CreateMultiSignatureForTransferSplice(string fromPubkeyStr, string txHash, long nonce, int origin, int dest, List<byte[]> from, List<byte[]> signatures, byte[] to, BigDecimal amount, List<byte[]> pubkeyHashList)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeMultTransfer(origin.ToBytesForRLPEncoding(), dest.ToBytesForRLPEncoding(), from, signatures, to, amount.ToLong().ToBytesForRLPEncoding(), pubkeyHashList);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateMultiSignatureToDeployForRuleOther(string fromPubkeyStr, string pubkeyFirstSign, string prikeyStr, bool isPutSign)
+        {
+            byte[] signRawBasicTransaction = SignRawBasicTransactionAndIsSign(pubkeyFirstSign, prikeyStr, isPutSign).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            JObject json = new JObject { { "pubkeyOther", signRawBasicTransaction.ToHex() }, { "signOther", fromPubkeyStr }, { "data", txHash }, { "message", traninfo } };
+            return json.ToString();
+        }
+
+        public static string SignRawBasicTransactionAndIsSign(string rawTransactionHex, string prikeyStr, bool isPutSign)
+        {
+            byte[] rawTransaction = rawTransactionHex.HexToByteArray();
+            //私钥字节数组
+            byte[] privkey = prikeyStr.HexToByteArray();
+            //version
+            byte[] version = Utils.CopyByteArray(rawTransaction, 0, 1);
+            //type
+            byte[] type = Utils.CopyByteArray(rawTransaction, 1, 1);
+            //nonce
+            byte[] nonce = Utils.CopyByteArray(rawTransaction, 2, 8);
+            //from
+            byte[] from = Utils.CopyByteArray(rawTransaction, 10, 32);
+            //gasprice
+            byte[] gasprice = Utils.CopyByteArray(rawTransaction, 42, 8);
+            //amount
+            byte[] amount = Utils.CopyByteArray(rawTransaction, 50, 8);
+            //signo
+            byte[] sign = Utils.CopyByteArray(rawTransaction, 58, 64);
+            //to
+            byte[] to = Utils.CopyByteArray(rawTransaction, 122, 20);
+            //payloadlen
+            byte[] payloadlen = Utils.CopyByteArray(rawTransaction, 142, 4);
+            //payload
+            byte[] payload = Utils.CopyByteArray(rawTransaction, 146, (int)NumericsUtils.decodeUint32(payloadlen));
+            byte[] rawTransactionNoSign = Utils.Combine(version, type, nonce, from, gasprice, amount, sign, to, payloadlen, payload);
+            byte[] rawTransactionNoSig = Utils.Combine(version, type, nonce, from, gasprice, amount);
+            //签名数据
+            byte[] sig = new byte[64];
+            if (isPutSign)
+            {
+                sig = new Ed25519PrivateKey(privkey).sign(rawTransactionNoSign);
+            }
+            byte[] transha = Sha3Keccack.Current.CalculateHash(Utils.Combine(rawTransactionNoSig, sig, to, payloadlen, payload));
+            byte[] signRawBasicTransaction = Utils.Combine(version, transha, type, nonce, from, gasprice, amount, sig, to, payloadlen, payload);
+            return signRawBasicTransaction.ToHex();
+        }
+
+        public static string CreateMultiSignatureToDeployForRuleFirst(string fromPubkeyStr, string prikeyStr, string txHashRule, long nonce, int origin, int dest, List<string> signatures, string to, BigDecimal value, List<string> pubkeyHashList)
+        {
+            List<byte[]> signs = signatures.Select(x => x.HexToByteArray()).ToList();
+            List<byte[]> pubkeyHashs = pubkeyHashList.Select(x => x.HexToByteArray()).ToList();
+            string rawTransactionHexFirst = CreateMultiSignatureForTransferFirst(fromPubkeyStr, txHashRule, nonce, origin, dest, new List<byte[]>(), new List<byte[]>(), to.HexToByteArray(), value, pubkeyHashs);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHexFirst, prikeyStr).HexToByteArray();
+            byte[] sign = ParseSignatureFromSignRawBasicTransaction(signRawBasicTransaction);
+            string rawTransactionHexFirstSign = CreateMultiSignatureForTransferFirst(fromPubkeyStr, txHashRule, nonce, origin, dest, new List<byte[]>(), new List<byte[]>() { sign }, to.HexToByteArray(), value, pubkeyHashs);
+            byte[] signRawBasicTransactionSign = SignRawBasicTransaction(rawTransactionHexFirstSign, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransactionSign, 1, 32).ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            JObject json = new JObject { { "pubkeyFirstSign", rawTransactionHexFirst }, { "pubkeyFirst", fromPubkeyStr }, { "signFirst", traninfo }, { "data", txHash } };
+            return json.ToString();
+
+        }
+
+        public static string CreateMultiSignatureForTransferFirst(string fromPubkeyStr, string txHash, long nonce, int origin, int dest, List<byte[]> from, List<byte[]> signatures, byte[] to, BigDecimal amount, List<byte[]> pubkeyHashList)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeMultTransfer(origin.ToBytesForRLPEncoding(), dest.ToBytesForRLPEncoding(), from, signatures, to, amount.ToLong().ToBytesForRLPEncoding(), pubkeyHashList);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateMultipleToDeployForRuleSignSplice(string prikeyStr, string pubFirstSign, string frompubkey, long nonce, string signFirst, string pubkeyOther, string signOther)
         {
             byte[] sign = ParseSignatureFromSignRawBasicTransaction(signOther.HexToByteArray());
@@ -72,7 +254,7 @@ namespace C__SDK
             //gas单价
             byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
             //分享收益 无符号64位
-            byte[] shareAccount = NumericsUtils.encodeUint64(0);
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
             //为签名留白
             byte[] signull = new byte[64];
             //接收者公钥哈希
@@ -81,7 +263,7 @@ namespace C__SDK
             byte[] payload = RLPUtils.EncodeMultiple(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), pubList, signatures, pubkeyHashList);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
-            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
             return rawTransaction.ToHex();
         }
 
@@ -201,7 +383,7 @@ namespace C__SDK
             //gas单价
             byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
             //分享收益 无符号64位
-            byte[] shareAccount = NumericsUtils.encodeUint64(0);
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
             //为签名留白
             byte[] signull = new byte[64];
             //接收者公钥哈希
@@ -209,7 +391,7 @@ namespace C__SDK
             byte[] payload = RLPUtils.EncodeMultiple(assetHash, max.ToBytesForRLPEncoding(), min.ToBytesForRLPEncoding(), pubList, signatures, publicKeyHashList);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
-            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
             return rawTransaction.ToHex();
         }
 
@@ -239,7 +421,7 @@ namespace C__SDK
             //gas单价
             byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
             //分享收益 无符号64位
-            byte[] shareAccount = NumericsUtils.encodeUint64(0);
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
             //为签名留白
             byte[] signull = new byte[64];
             //接收者公钥哈希
@@ -248,7 +430,7 @@ namespace C__SDK
             byte[] payload = RLPUtils.EncodeList(from, to, BigDecimal.Multiply(amount, new BigDecimal(rate)).ToLong().ToBytesForRLPEncoding());
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
-            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
             return rawTransaction.ToHex();
         }
 
@@ -285,7 +467,7 @@ namespace C__SDK
             //gas单价
             byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
             //分享收益 无符号64位
-            byte[] shareAccount = NumericsUtils.encodeUint64(0);
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
             //为签名留白
             byte[] signull = new byte[64];
             //接收者公钥哈希
@@ -294,7 +476,7 @@ namespace C__SDK
             byte[] payload = RLPUtils.EncodeList(amount.ToLong().ToBytesForRLPEncoding());
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x02 }, payload);
-            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAccount, signull, toPubkeyHash, allPayload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
             return rawTransaction.ToHex();
         }
 
