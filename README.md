@@ -8,7 +8,7 @@ dotnet new console -o CSharp_SDK
 
 ### Running Unit Tests
 ```json
-dotnet test
+cd test/CSharpSDKTest && dotnet test
 ```
 
 ### Delete and add Libraries
@@ -20,7 +20,7 @@ dotnet remove package BouncyCastle
 
 ### Encryption library selection
 
-* BC  `BouncyCastle`
+* `BC`  `BouncyCastle`
 * `Argon2`  `Isopoh.Cryptography.Argon2`
 * `AES` `LibAES-CTR`
 * `sha3Keccack` `Org.BouncyCastle.Crypto.Digests`
@@ -29,6 +29,7 @@ dotnet remove package BouncyCastle
 
 ### Third party library selection
 * `json` `Newtonsoft.Json`
+* `Hex` `Nethereum.Hex`
 
 ### Local method
 
