@@ -4,14 +4,14 @@ namespace CSharp_SDK
 {
     public class Keystore
     {
-        public String address;
+        public string address;
         public Crypto crypto;
         public Kdfparams kdfparams;
-        public String id;
-        public String version;
-        public String mac;
-        public String kdf;
-        public Keystore(String address, Crypto crypto, String id, String version, String mac, String kdf, Kdfparams kdfparams)
+        public string id;
+        public string version;
+        public string mac;
+        public string kdf;
+        public Keystore(string address, Crypto crypto, string id, string version, string mac, string kdf, Kdfparams kdfparams)
         {
             this.address = address;
             this.crypto = crypto;
@@ -26,12 +26,12 @@ namespace CSharp_SDK
         {
         }
 
-        public String getAddress()
+        public string getAddress()
         {
             return address;
         }
 
-        public void setAddress(String address)
+        public void setAddress(string address)
         {
             this.address = address;
         }
@@ -46,42 +46,42 @@ namespace CSharp_SDK
             this.crypto = crypto;
         }
 
-        public String getId()
+        public string getId()
         {
             return id;
         }
 
-        public void setId(String id)
+        public void setId(string id)
         {
             this.id = id;
         }
 
-        public String getVersion()
+        public string getVersion()
         {
             return version;
         }
 
-        public void setVersion(String version)
+        public void setVersion(string version)
         {
             this.version = version;
         }
 
-        public String getMac()
+        public string getMac()
         {
             return mac;
         }
 
-        public void setMac(String mac)
+        public void setMac(string mac)
         {
             this.mac = mac;
         }
 
-        public String getKdf()
+        public string getKdf()
         {
             return kdf;
         }
 
-        public void setKdf(String kdf)
+        public void setKdf(string kdf)
         {
             this.kdf = kdf;
         }
