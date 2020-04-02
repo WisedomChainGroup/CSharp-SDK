@@ -148,7 +148,7 @@ info  asset information
 ##### build change asset owner transaction
 
 ```c#
-TxUtility.CreateSignToDeployforAssetChangeowner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
+TxUtility.CreateSignToDeployforAssetChangeOwner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
 fromPubkeyStr   sender publicKey
 tranTxHash transaction hash
 prikeyStr  sender prikeyStr

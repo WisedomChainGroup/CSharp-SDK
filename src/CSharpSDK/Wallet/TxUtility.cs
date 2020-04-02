@@ -262,7 +262,7 @@ namespace CSharp_SDK
                 hash = RipemdManager.getHash(assetHash.HexToByteArray());
             }
             string rawTransactionHex = HashHeightBlockForDeploy(fromPubkeyStr, nonce, hash, pubkeyHash.HexToByteArray());
-            
+
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
             string traninfo = signRawBasicTransaction.ToHex();
@@ -932,7 +932,7 @@ namespace CSharp_SDK
         }
 
 
-        public static string CreateSignToDeployforAssetChangeowner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
+        public static string CreateSignToDeployforAssetChangeOwner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
         {
             byte[] owner;
             if (newOwner.Equals("0000000000000000000000000000000000000000"))
@@ -1043,7 +1043,8 @@ namespace CSharp_SDK
         {
             if (value.CompareTo(BigDecimal.Zero) <= 0 || value.CompareTo(new BigDecimal(long.MaxValue)) > 0)
             {
-                return new Tuple<bool, string>(false, key + " must be a positive number");
+                JObject jObject = new JObject { { "message", key + " must be a positive number" } };
+                return new Tuple<bool, string>(false, jObject.ToString());
             }
             return new Tuple<bool, string>(true, "value is ok");
         }
