@@ -193,7 +193,7 @@ namespace CSharp_SDK
             //接收者公钥哈希
             byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
             //构造payload
-            byte[] payload = RLP.EncodeList(amount.ToLong().ToBytesForRLPEncoding(), hashResult, blockHeight.ToLong().ToBytesForRLPEncoding());
+            byte[] payload = RLPUtils.EncodeList(amount.ToLong().ToBytesForRLPEncoding(), hashResult, blockHeight.ToLong().ToBytesForRLPEncoding());
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x06 }, payload);
             byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
@@ -243,7 +243,7 @@ namespace CSharp_SDK
             byte[] signull = new byte[64];
             //接收者公钥哈希
             byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
-            byte[] payload = RLP.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
+            byte[] payload = RLPUtils.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x07 }, payload);
             byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
@@ -261,7 +261,8 @@ namespace CSharp_SDK
             {
                 hash = RipemdManager.getHash(assetHash.HexToByteArray());
             }
-            string rawTransactionHex = HashHeightBlockForDeploy(fromPubkeyStr, nonce, assetHash.HexToByteArray(), pubkeyHash.HexToByteArray());
+            string rawTransactionHex = HashHeightBlockForDeploy(fromPubkeyStr, nonce, hash, pubkeyHash.HexToByteArray());
+            
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
             string traninfo = signRawBasicTransaction.ToHex();
@@ -289,7 +290,7 @@ namespace CSharp_SDK
             byte[] signull = new byte[64];
             //接收者公钥哈希,填0
             byte[] toPubkeyHash = "0000000000000000000000000000000000000000".HexToByteArray();
-            byte[] payload = RLP.EncodeList(assetHash, pubkeyHash);
+            byte[] payload = RLPUtils.EncodeList(assetHash, pubkeyHash);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
             byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
