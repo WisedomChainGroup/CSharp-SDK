@@ -35,40 +35,18 @@ namespace CSharp_SDK
             return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(a), RLP.EncodeElement(b), RLP.EncodeElement(c), RLP.EncodeList(EncodeElementsBytes(d.ToArray())), RLP.EncodeList(EncodeElementsBytes(e.ToArray())), RLP.EncodeList(EncodeElementsBytes(f.ToArray())));
         }
 
-        public static Multiple DecodeMultiple(byte[] encoderesult)
+        public static Multiple DecodeMultiple(byte[] encodeResult)
         {
             Multiple multiple = new Multiple();
-            byte[] payloadLen = Utils.CopyByteArray(encoderesult, 0, 1);
-            encoderesult = Utils.CopyByteArray(encoderesult, 1, encoderesult.Length - 1);
-
-            int aLength = encoderesult[0] - 0x80;
-            byte[] a = Utils.CopyByteArray(encoderesult, 0, aLength + 1);
-            multiple.assetHash = RLP.Decode(a).RLPData;
-            encoderesult = Utils.CopyByteArray(encoderesult, aLength + 1, encoderesult.Length - (aLength + 1));
-
-            int bLength = encoderesult[0] - 0x80;
-            byte[] b = Utils.CopyByteArray(encoderesult, 0, bLength + 1);
-            multiple.max = RLP.Decode(b).RLPData.ToIntFromRLPDecoded();
-            encoderesult = Utils.CopyByteArray(encoderesult, bLength + 1, encoderesult.Length - (bLength + 1));
-
-            int cLength = encoderesult[0] - 0x80;
-            byte[] c = Utils.CopyByteArray(encoderesult, 0, cLength + 1);
-            multiple.max = RLP.Decode(b).RLPData.ToIntFromRLPDecoded();
-            encoderesult = Utils.CopyByteArray(encoderesult, cLength + 1, encoderesult.Length - (cLength + 1));
-
-
-            int dLength = encoderesult[0] - 0xc0;
-            byte[] d = Utils.CopyByteArray(encoderesult, 0, dLength + 1);
-            multiple.pubList = (RLP.Decode(d) as RLPCollection).Select(x => x.RLPData).ToList();
-            encoderesult = Utils.CopyByteArray(encoderesult, dLength + 1, encoderesult.Length - (dLength + 1));
-
-            int eLength = encoderesult[0] - 0xc0;
-            byte[] e = Utils.CopyByteArray(encoderesult, 0, eLength + 1);
-            multiple.signatures = (RLP.Decode(e) as RLPCollection).Select(x => x.RLPData).ToList();
-
-            encoderesult = Utils.CopyByteArray(encoderesult, eLength + 1, encoderesult.Length - (eLength + 1));
-
-            multiple.pubkeyHashList = (RLP.Decode(encoderesult) as RLPCollection).Select(x => x.RLPData).ToList();
+            byte[] payloadLen = Utils.CopyByteArray(encodeResult, 0, 1);
+            encodeResult = Utils.CopyByteArray(encodeResult, 1, encodeResult.Length - 1);
+            var collections = RLP.Decode(encodeResult) as RLPCollection;
+            multiple.assetHash = collections[0].RLPData;
+            multiple.max = collections[1].RLPData.ToIntFromRLPDecoded();
+            multiple.min = collections[2].RLPData.ToIntFromRLPDecoded();
+            multiple.pubList = (collections[3] as RLPCollection).Select(x => x.RLPData).ToList();
+            multiple.signatures = (collections[4] as RLPCollection).Select(x => x.RLPData).ToList();
+            multiple.pubkeyHashList = (collections[5] as RLPCollection).Select(x => x.RLPData).ToList();
             return multiple;
         }
 
@@ -94,45 +72,36 @@ namespace CSharp_SDK
             return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(origin), RLP.EncodeElement(dest), RLP.EncodeList(EncodeElementsBytes(from.ToArray())), RLP.EncodeList(EncodeElementsBytes(signatures.ToArray())), RLP.EncodeElement(to), RLP.EncodeElement(value), RLP.EncodeList(EncodeElementsBytes(pubkeyHashList.ToArray())));
         }
 
-        public static MultTransfer DecodeMultTransfer(byte[] encoderesult)
+        public static MultTransfer DecodeMultTransfer(byte[] encodeResult)
         {
             MultTransfer multTransfer = new MultTransfer();
-            byte[] payloadLen = Utils.CopyByteArray(encoderesult, 0, 1);
-            encoderesult = Utils.CopyByteArray(encoderesult, 1, encoderesult.Length - 1);
-
-            int aLength = encoderesult[0] - 0x80;
-            byte[] a = Utils.CopyByteArray(encoderesult, 0, aLength + 1);
-            multTransfer.origin = RLP.Decode(a).RLPData.ToIntFromRLPDecoded();
-            encoderesult = Utils.CopyByteArray(encoderesult, aLength + 1, encoderesult.Length - (aLength + 1));
-
-            int bLength = encoderesult[0] - 0x80;
-            byte[] b = Utils.CopyByteArray(encoderesult, 0, bLength + 1);
-            multTransfer.dest = RLP.Decode(b).RLPData.ToIntFromRLPDecoded();
-            encoderesult = Utils.CopyByteArray(encoderesult, bLength + 1, encoderesult.Length - (bLength + 1));
-
-            int cLength = encoderesult[0] - 0xc0;
-            byte[] c = Utils.CopyByteArray(encoderesult, 0, cLength + 1);
-            multTransfer.from = (RLP.Decode(c) as RLPCollection).Select(x => x.RLPData).ToList();
-            encoderesult = Utils.CopyByteArray(encoderesult, cLength + 1, encoderesult.Length - (cLength + 1));
-
-
-            int dLength = encoderesult[0] - 0xc0;
-            byte[] d = Utils.CopyByteArray(encoderesult, 0, dLength + 1);
-            multTransfer.signatures = (RLP.Decode(d) as RLPCollection).Select(x => x.RLPData).ToList();
-            encoderesult = Utils.CopyByteArray(encoderesult, dLength + 1, encoderesult.Length - (dLength + 1));
-
-            int eLength = encoderesult[0] - 0x80;
-            byte[] e = Utils.CopyByteArray(encoderesult, 0, eLength + 1);
-            multTransfer.to = RLP.Decode(e).RLPData;
-            encoderesult = Utils.CopyByteArray(encoderesult, eLength + 1, encoderesult.Length - (eLength + 1));
-
-            int fLength = encoderesult[0] - 0x80;
-            byte[] f = Utils.CopyByteArray(encoderesult, 0, fLength + 1);
-            multTransfer.value = RLP.Decode(f).RLPData.ToLongFromRLPDecoded();
-            encoderesult = Utils.CopyByteArray(encoderesult, fLength + 1, encoderesult.Length - (fLength + 1));
-
-            multTransfer.pubkeyHashList = (RLP.Decode(encoderesult) as RLPCollection).Select(x => x.RLPData).ToList();
+            byte[] payloadLen = Utils.CopyByteArray(encodeResult, 0, 1);
+            encodeResult = Utils.CopyByteArray(encodeResult, 1, encodeResult.Length - 1);
+            var collections = RLP.Decode(encodeResult) as RLPCollection;
+            multTransfer.origin = collections[0].RLPData.ToIntFromRLPDecoded();
+            multTransfer.dest = collections[1].RLPData.ToIntFromRLPDecoded();
+            multTransfer.from = (collections[2] as RLPCollection).Select(x => x.RLPData).ToList();
+            multTransfer.signatures = (collections[3] as RLPCollection).Select(x => x.RLPData).ToList();
+            multTransfer.to = collections[4].RLPData;
+            multTransfer.value = collections[5].RLPData.ToIntFromRLPDecoded();
+            multTransfer.pubkeyHashList = (collections[6] as RLPCollection).Select(x => x.RLPData).ToList();
             return multTransfer;
+        }
+
+        public static Asset DecodeAsset(byte[] encodeResult)
+        {
+            Asset asset = new Asset();
+            byte[] payloadLen = Utils.CopyByteArray(encodeResult, 0, 1);
+            encodeResult = Utils.CopyByteArray(encodeResult, 1, encodeResult.Length - 1);
+            var collections = RLP.Decode(encodeResult) as RLPCollection;
+            asset.code = collections[0].RLPData.ToStringFromRLPDecoded();
+            asset.offering = collections[1].RLPData.ToLongFromRLPDecoded();
+            asset.totalAmount = collections[2].RLPData.ToLongFromRLPDecoded();
+            asset.createUser = collections[3].RLPData;
+            asset.owner = collections[4].RLPData;
+            asset.allowIncrease = collections[5].RLPData.ToIntFromRLPDecoded();
+            asset.info = collections[6].RLPData;
+            return asset;
         }
 
     }

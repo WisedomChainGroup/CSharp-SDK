@@ -14,6 +14,126 @@ namespace CSharp_SDK
 
         private static long rate = 100000000L;
 
+        public static string GetHashTimeBlock(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            byte[] assetHash = collections[0].RLPData;
+            byte[] pubkeyHash = collections[1].RLPData;
+            JObject json = new JObject { { "assetHash", assetHash.ToHex() }, { "pubkeyHash", pubkeyHash.ToHex() } };
+            return json.ToString();
+        }
+
+        public static string GetHashTimeBlockGet(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            byte[] transferHash = collections[0].RLPData;
+            string originText = collections[1].RLPData.ToStringFromRLPDecoded();
+            long timestamp = collections[2].RLPData.ToIntFromRLPDecoded();
+            JObject json = new JObject { { "transferHash", transferHash.ToHex() }, { "originText", originText } };
+            return json.ToString();
+        }
+
+        public static string GetHashTimeBlockTransfer(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            long value = collections[0].RLPData.ToIntFromRLPDecoded();
+            byte[] hashResult = collections[1].RLPData;
+            long timestamp = collections[2].RLPData.ToIntFromRLPDecoded();
+            JObject json = new JObject { { "value", value }, { "hashResult", hashResult.ToHex() }, { "timestamp", timestamp } };
+            return json.ToString();
+        }
+
+        public static string GetHashHeightBlock(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            byte[] assetHash = collections[0].RLPData;
+            byte[] pubkeyHash = collections[1].RLPData;
+            JObject json = new JObject { { "assetHash", assetHash.ToHex() }, { "pubkeyHash", pubkeyHash.ToHex() } };
+            return json.ToString();
+        }
+
+        public static string GetHashHeightBlockGet(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            byte[] transferHash = collections[0].RLPData;
+            string originText = collections[1].RLPData.ToStringFromRLPDecoded();
+            JObject json = new JObject { { "transferHash", transferHash.ToHex() }, { "originText", originText } };
+            return json.ToString();
+        }
+
+        public static string GetHashHeightBlockTransfer(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            long value = collections[0].RLPData.ToIntFromRLPDecoded();
+            byte[] hashResult = collections[1].RLPData;
+            long height = collections[2].RLPData.ToIntFromRLPDecoded();
+            JObject json = new JObject { { "value", value }, { "hashResult", hashResult.ToHex() }, { "height", height } };
+            return json.ToString();
+        }
+
+        public static string GetMultTransfer(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            MultTransfer multTransfer = RLPUtils.DecodeMultTransfer(newPayload);
+            List<string> from = multTransfer.from.Select(x => x.ToHex()).ToList();
+            List<string> signatures = multTransfer.signatures.Select(x => x.ToHex()).ToList();
+            List<string> pubHashList = multTransfer.pubkeyHashList.Select(x => x.ToHex()).ToList();
+            JObject json = new JObject { { "to", multTransfer.to.ToHex() }, { "origin", multTransfer.origin }, { "dest", multTransfer.dest }, { "value", multTransfer.value }, { "signatures", signatures.ToString() }, { "pubHashList", pubHashList.ToString() }, { "from", from.ToString() } };
+            return json.ToString();
+        }
+
+        public static string GetMultiple(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            Multiple multiple = RLPUtils.DecodeMultiple(newPayload);
+            List<string> pubList = multiple.pubList.Select(x => x.ToHex()).ToList();
+            List<string> signatures = multiple.signatures.Select(x => x.ToHex()).ToList();
+            List<string> pubHashList = multiple.pubkeyHashList.Select(x => x.ToHex()).ToList();
+            JObject json = new JObject { { "assetHash", multiple.assetHash.ToHex() }, { "max", multiple.max }, { "min", multiple.min }, { "pubList", pubList.ToString() }, { "signatures", signatures.ToString() }, { "pubHashList", pubHashList.ToString() } };
+            return json.ToString();
+        }
+
+        public static string GetAssetTransfer(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            var collections = RLP.Decode(newPayload) as RLPCollection;
+            byte[] from = collections[0].RLPData;
+            byte[] to = collections[1].RLPData;
+            long value = collections[2].RLPData.ToIntFromRLPDecoded();
+            JObject json = new JObject { { "from", from.ToHex() }, { "to", to.ToHex() }, { "value", value } };
+            return json.ToString();
+        }
+
+        public static string GetAssetChangeOwner(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            byte[] newOwner = RLP.Decode(newPayload).RLPData;
+            JObject json = new JObject { "newOwner", newOwner.ToHex() };
+            return json.ToString();
+        }
+
+        public static string GetAssetIncreased(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            long amount = RLP.Decode(newPayload).RLPData.ToIntFromRLPDecoded();
+            JObject json = new JObject { "assetIncreased", { "amount", amount } };
+            return json.ToString();
+        }
+
+        public static string GetAsset(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            Asset asset = RLPUtils.DecodeAsset(newPayload);
+            JObject json = new JObject { { "code", asset.code }, { "offering", asset.offering }, { "totalAmount", asset.totalAmount }, { "createUser", asset.createUser.ToHex() }, { "owner", asset.owner.ToHex() }, { "allowIncrease", asset.allowIncrease }, { "info", asset.info.ToHex() } };
+            return json.ToString();
+        }
+
         public static string CreateHashHeightBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal blockHeight)
         {
             string newHashResult = hashResult.Replace(" ", "");
@@ -29,6 +149,10 @@ namespace CSharp_SDK
                 return json.ToString();
             }
             string rawTransactionHex = HashHeightBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateHash(hashResultUtf8), blockHeight);
+            if (rawTransactionHex.Contains("must be a positive number"))
+            {
+                return rawTransactionHex;
+            }
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
             string traninfo = signRawBasicTransaction.ToHex();
@@ -40,7 +164,7 @@ namespace CSharp_SDK
         {
             amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
 
-            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
             if (!tupleAmount.Item1)
             {
                 return tupleAmount.Item2;
@@ -187,6 +311,10 @@ namespace CSharp_SDK
                 return json.ToString();
             }
             string rawTransactionHex = HashTimeBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateHash(hashResultUtf8), timestamp);
+            if (rawTransactionHex.Contains("must be a positive number"))
+            {
+                return rawTransactionHex;
+            }
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32).ToHex();
             string traninfo = signRawBasicTransaction.ToHex();
@@ -198,7 +326,7 @@ namespace CSharp_SDK
         {
             amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
 
-            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
             if (!tupleAmount.Item1)
             {
                 return tupleAmount.Item2;
@@ -461,9 +589,17 @@ namespace CSharp_SDK
             List<byte[]> signs = signatures.Select(x => x.HexToByteArray()).ToList();
             List<byte[]> pubkeyHashs = pubkeyHashList.Select(x => x.HexToByteArray()).ToList();
             string rawTransactionHexFirst = CreateMultiSignatureForTransferFirst(fromPubkeyStr, txHashRule, nonce, origin, dest, new List<byte[]>(), new List<byte[]>(), to.HexToByteArray(), value, pubkeyHashs);
+            if (rawTransactionHexFirst.Contains("must be a positive number"))
+            {
+                return rawTransactionHexFirst;
+            }
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHexFirst, prikeyStr).HexToByteArray();
             byte[] sign = ParseSignatureFromSignRawBasicTransaction(signRawBasicTransaction);
             string rawTransactionHexFirstSign = CreateMultiSignatureForTransferFirst(fromPubkeyStr, txHashRule, nonce, origin, dest, new List<byte[]>(), new List<byte[]>() { sign }, to.HexToByteArray(), value, pubkeyHashs);
+            if (rawTransactionHexFirstSign.Contains("must be a positive number"))
+            {
+                return rawTransactionHexFirstSign;
+            }
             byte[] signRawBasicTransactionSign = SignRawBasicTransaction(rawTransactionHexFirstSign, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransactionSign, 1, 32).ToHex();
             string traninfo = signRawBasicTransaction.ToHex();
@@ -476,7 +612,7 @@ namespace CSharp_SDK
         {
             amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
 
-            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
             if (!tupleAmount.Item1)
             {
                 return tupleAmount.Item2;
@@ -747,6 +883,10 @@ namespace CSharp_SDK
         public static string CreateSignToDeployForRuleAssetIncreased(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, BigDecimal amount)
         {
             string rawTransactionHex = CreateCallForRuleAssetIncreased(fromPubkeyStr, tranTxHash, nonce, amount);
+            if (rawTransactionHex.Contains("must be a positive number"))
+            {
+                return rawTransactionHex;
+            }
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
             String txHash = hash.ToHex();
@@ -759,7 +899,7 @@ namespace CSharp_SDK
         {
             amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
 
-            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount);
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
             if (!tupleAmount.Item1)
             {
                 return tupleAmount.Item2;
@@ -843,6 +983,10 @@ namespace CSharp_SDK
         {
             byte[] infoUtf8 = System.Text.Encoding.UTF8.GetBytes(info);
             string rawTransactionHex = CreateDeployForRuleAsset(fromPubkeyStr, nonce, code, offering, offering, createUser.HexToByteArray(), KeystoreUtils.AddressToPubkeyHash(owner).HexToByteArray(), allowIncrease, infoUtf8);
+            if (rawTransactionHex.Contains("must be a positive number"))
+            {
+                return rawTransactionHex;
+            }
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
             String txHash = hash.ToHex();
@@ -856,12 +1000,12 @@ namespace CSharp_SDK
             offering = BigDecimal.Multiply(offering, new BigDecimal(rate));
             totalAmount = BigDecimal.Multiply(totalAmount, new BigDecimal(rate));
 
-            Tuple<bool, string> tupleOffering = JudgeBigDecimalIsValid(offering);
+            Tuple<bool, string> tupleOffering = JudgeBigDecimalIsValid(offering, "offering");
             if (!tupleOffering.Item1)
             {
                 return tupleOffering.Item2;
             }
-            Tuple<bool, string> tupleTotalAmount = JudgeBigDecimalIsValid(totalAmount);
+            Tuple<bool, string> tupleTotalAmount = JudgeBigDecimalIsValid(totalAmount, "total amount");
             if (!tupleTotalAmount.Item1)
             {
                 return tupleTotalAmount.Item2;
@@ -894,13 +1038,13 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
-        private static Tuple<bool, string> JudgeBigDecimalIsValid(BigDecimal value)
+        private static Tuple<bool, string> JudgeBigDecimalIsValid(BigDecimal value, string key)
         {
             if (value.CompareTo(BigDecimal.Zero) <= 0 || value.CompareTo(new BigDecimal(long.MaxValue)) > 0)
             {
-                return new Tuple<bool, string>(false, "offering must be a positive number");
+                return new Tuple<bool, string>(false, key + " must be a positive number");
             }
-            return new Tuple<bool, string>(true, "offering is ok");
+            return new Tuple<bool, string>(true, "value is ok");
         }
 
         public static string ClientToTransferMortgageWithdraw(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, long nonce, string txid, string prikeyStr)
