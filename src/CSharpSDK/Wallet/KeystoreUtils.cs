@@ -49,20 +49,6 @@ namespace CSharp_SDK
 
         public static string PrivatekeyToPublicKey(string privateKey)
         {
-            if (privateKey.Length == 64)
-            {
-                if (new BigInteger(privateKey.HexToByteArray()).CompareTo(new BigInteger(t.HexToByteArray())) > 0)
-                {
-                    return "";
-                }
-            }
-            else if (privateKey.Length == 128)
-            {
-                if (new BigInteger(privateKey.Substring(0, 64).HexToByteArray()).CompareTo(new BigInteger(t.HexToByteArray())) > 0)
-                {
-                    return "";
-                }
-            }
             Ed25519PrivateKey eprik = new Ed25519PrivateKey(privateKey.HexToByteArray());
             Ed25519PublicKey epuk = eprik.GeneratePublicKey();
             return epuk.GetEncoded().ToHex();
