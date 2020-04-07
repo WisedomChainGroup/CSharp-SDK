@@ -297,7 +297,7 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
-        public static string CreateHashTimeBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, String txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal timestamp)
+        public static string CreateHashTimeBlockTransferForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, BigDecimal amount, string hashResult, BigDecimal timestamp)
         {
             string newHashResult = hashResult.Replace(" ", "");
             if (newHashResult.Equals(""))
@@ -996,7 +996,7 @@ namespace CSharp_SDK
             return JsonConvert.SerializeObject(result);
         }
 
-        public static string CreateDeployForRuleAsset(string fromPubkeyStr, long nonce, String code, BigDecimal offering, BigDecimal totalAmount, byte[] createUser, byte[] owner, int allowIncrease, byte[] info)
+        public static string CreateDeployForRuleAsset(string fromPubkeyStr, long nonce, string code, BigDecimal offering, BigDecimal totalAmount, byte[] createUser, byte[] owner, int allowIncrease, byte[] info)
         {
             offering = BigDecimal.Multiply(offering, new BigDecimal(rate));
             totalAmount = BigDecimal.Multiply(totalAmount, new BigDecimal(rate));
@@ -1277,7 +1277,7 @@ namespace CSharp_SDK
             return new string(rawTransaction.ToHex());
         }
 
-        public static String SignRawBasicTransaction(String rawTransactionHex, String prikeyStr)
+        public static string SignRawBasicTransaction(string rawTransactionHex, string prikeyStr)
         {
             byte[] rawTransaction = rawTransactionHex.HexToByteArray();
             byte[] privkey = prikeyStr.HexToByteArray();
