@@ -148,7 +148,7 @@ namespace CSharp_SDK
                 JObject json = new JObject { { "message", "hash result length is too large or too short" } };
                 return json.ToString();
             }
-            string rawTransactionHex = HashHeightBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateHash(hashResultUtf8), blockHeight);
+            string rawTransactionHex = HashHeightBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateSha3Hash(hashResultUtf8), blockHeight);
             if (rawTransactionHex.Contains("must be a positive number"))
             {
                 return rawTransactionHex;
@@ -311,7 +311,7 @@ namespace CSharp_SDK
                 JObject json = new JObject { { "message", "hash result length is too large or too short" } };
                 return json.ToString();
             }
-            string rawTransactionHex = HashTimeBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateHash(hashResultUtf8), timestamp);
+            string rawTransactionHex = HashTimeBlockTransferForDeploy(fromPubkeyStr, txGetHash, nonce, amount, Sha3Keccack.Current.CalculateSha3Hash(hashResultUtf8), timestamp);
             if (rawTransactionHex.Contains("must be a positive number"))
             {
                 return rawTransactionHex;

@@ -29,6 +29,15 @@ namespace CSharp_SDK
             digest.DoFinal(output, 0);
             return output;
         }
+
+         public byte[] CalculateSha3Hash(byte[] value)
+        {
+            var digest = new Sha3Digest(256);
+            var output = new byte[digest.GetDigestSize()];
+            digest.BlockUpdate(value, 0, value.Length);
+            digest.DoFinal(output, 0);
+            return output;
+        }
     }
 
 }
