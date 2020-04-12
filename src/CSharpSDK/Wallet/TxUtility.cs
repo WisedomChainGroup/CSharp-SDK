@@ -777,10 +777,10 @@ namespace CSharp_SDK
             string rawTransactionHex = CreateMultipleForRuleFirst(fromPubkeyStr, nonce, hash, max, min, new List<byte[]>(), new List<byte[]>(), pubKeyHashList);
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             byte[] sign = ParseSignatureFromSignRawBasicTransaction(signRawBasicTransaction);
-            string rawTransactionHexFirstSign = CreateMultipleForRuleFirst(fromPubkeyStr, nonce, hash, max, min, new List<byte[]>(), new List<byte[]>() { sign }, pubKeyHashList);
+            string rawTransactionHexFirstSign = CreateMultipleForRuleFirst(fromPubkeyStr, nonce, hash, max, min,new List<byte[]>(),new List<byte[]>(){sign} , pubKeyHashList);
             byte[] signRawBasicTransactionSign = SignRawBasicTransaction(rawTransactionHexFirstSign, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransactionSign, 1, 32).ToHex();
-            string traninfo = signRawBasicTransaction.ToHex();
+            string traninfo = signRawBasicTransactionSign.ToHex();
             JObject json = new JObject { { "pubkeyFirstSign", rawTransactionHex }, { "pubkeyFirst", fromPubkeyStr }, { "signFirst", traninfo }, { "data", txHash }, { "message", traninfo } };
             return json.ToString();
         }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 namespace CSharp_SDK
 {
     public class RLPUtils
@@ -19,20 +20,16 @@ namespace CSharp_SDK
 
         public static byte[] EncodeMultiple(byte[] a, byte[] b, byte[] c, List<byte[]> d, List<byte[]> e, List<byte[]> f)
         {
-            int length = a.Length + b.Length + c.Length + d.Select(x => x.Length + 1).Sum() + e.Select(x => x.Length + 1).Sum() + f.Select(x => x.Length + 1).Sum() + 3;
-            if (a.Length > 1)
+            int length = RLP.EncodeElement(a).Length + RLP.EncodeElement(b).Length + RLP.EncodeElement(c).Length + RLPUtils.EncodeList(d.ToArray()).Length + RLPUtils.EncodeList(e.ToArray()).Length + RLPUtils.EncodeList(f.ToArray()).Length;
+            if (length < 56)
             {
-                length++;
+                return Utils.Combine(new byte[] { (byte)(0xf0 + length) }, RLP.EncodeElement(a), RLP.EncodeElement(b), RLP.EncodeElement(c), RLP.EncodeList(EncodeElementsBytes(d.ToArray())), RLP.EncodeList(EncodeElementsBytes(e.ToArray())), RLP.EncodeList(EncodeElementsBytes(f.ToArray())));
             }
-            if (b.Length > 1)
+            else
             {
-                length++;
+                Tuple<byte, byte[]> tuple = NumericsUtils.getLengthByte(length);
+                return Utils.Combine(new byte[] { (byte)(0xf7 + tuple.Item1) }, tuple.Item2, RLP.EncodeElement(a), RLP.EncodeElement(b), RLP.EncodeElement(c), RLP.EncodeList(EncodeElementsBytes(d.ToArray())), RLP.EncodeList(EncodeElementsBytes(e.ToArray())), RLP.EncodeList(EncodeElementsBytes(f.ToArray())));
             }
-            if (c.Length > 1)
-            {
-                length++;
-            }
-            return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(a), RLP.EncodeElement(b), RLP.EncodeElement(c), RLP.EncodeList(EncodeElementsBytes(d.ToArray())), RLP.EncodeList(EncodeElementsBytes(e.ToArray())), RLP.EncodeList(EncodeElementsBytes(f.ToArray())));
         }
 
         public static Multiple DecodeMultiple(byte[] encodeResult)
@@ -52,24 +49,17 @@ namespace CSharp_SDK
 
         public static byte[] EncodeMultTransfer(byte[] origin, byte[] dest, List<byte[]> from, List<byte[]> signatures, byte[] to, byte[] value, List<byte[]> pubkeyHashList)
         {
-            int length = origin.Length + dest.Length + to.Length + value.Length + from.Select(x => x.Length + 1).Sum() + signatures.Select(x => x.Length + 1).Sum() + pubkeyHashList.Select(x => x.Length + 1).Sum() + 3;
-            if (origin.Length > 1)
+
+            int length = RLP.EncodeElement(origin).Length + RLP.EncodeElement(dest).Length + RLPUtils.EncodeList(from.ToArray()).Length + RLPUtils.EncodeList(signatures.ToArray()).Length + RLP.EncodeElement(to).Length + RLP.EncodeElement(value).Length + RLPUtils.EncodeList(pubkeyHashList.ToArray()).Length;
+            if (length < 56)
             {
-                length++;
+                return Utils.Combine(new byte[] { (byte)(0xf0 + length) }, RLP.EncodeElement(origin), RLP.EncodeElement(dest), RLP.EncodeList(EncodeElementsBytes(from.ToArray())), RLP.EncodeList(EncodeElementsBytes(signatures.ToArray())), RLP.EncodeElement(to), RLP.EncodeElement(value), RLP.EncodeList(EncodeElementsBytes(pubkeyHashList.ToArray())));
             }
-            if (dest.Length > 1)
+            else
             {
-                length++;
+                Tuple<byte, byte[]> tuple = NumericsUtils.getLengthByte(length);
+                return Utils.Combine(new byte[] { (byte)(0xf7 + tuple.Item1) }, tuple.Item2, RLP.EncodeElement(origin), RLP.EncodeElement(dest), RLP.EncodeList(EncodeElementsBytes(from.ToArray())), RLP.EncodeList(EncodeElementsBytes(signatures.ToArray())), RLP.EncodeElement(to), RLP.EncodeElement(value), RLP.EncodeList(EncodeElementsBytes(pubkeyHashList.ToArray())));
             }
-            if (to.Length > 1)
-            {
-                length++;
-            }
-            if (value.Length > 1)
-            {
-                length++;
-            }
-            return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(origin), RLP.EncodeElement(dest), RLP.EncodeList(EncodeElementsBytes(from.ToArray())), RLP.EncodeList(EncodeElementsBytes(signatures.ToArray())), RLP.EncodeElement(to), RLP.EncodeElement(value), RLP.EncodeList(EncodeElementsBytes(pubkeyHashList.ToArray())));
         }
 
         public static MultTransfer DecodeMultTransfer(byte[] encodeResult)
