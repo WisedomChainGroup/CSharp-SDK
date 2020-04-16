@@ -30,7 +30,7 @@ namespace CSharp_SDK
                 Argon2Manager argon2Manager = Argon2Manager.Current;
                 byte[] derivedKey = argon2Manager.hash(System.Text.Encoding.ASCII.GetBytes(password), salt);
                 AesManager aes = AesManager.Current;
-                byte[] cipherPrivKey = aes.Encryptdata(derivedKey, keyPair.GetPrivateKey().getBytes(), iv);
+                byte[] cipherPrivKey = aes.Encryptdata(keyPair.GetPrivateKey().getBytes(), derivedKey, iv);
                 Sha3Keccack sha3Keccack = Sha3Keccack.Current;
                 byte[] mac = sha3Keccack.CalculateHash(Utils.Combine(derivedKey, cipherPrivKey));
                 Crypto crypto = new Crypto(
