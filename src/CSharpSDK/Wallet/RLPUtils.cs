@@ -23,7 +23,7 @@ namespace CSharp_SDK
             int length = RLP.EncodeElement(a).Length + RLP.EncodeElement(b).Length + RLP.EncodeElement(c).Length + RLPUtils.EncodeList(d.ToArray()).Length + RLPUtils.EncodeList(e.ToArray()).Length + RLPUtils.EncodeList(f.ToArray()).Length;
             if (length < 56)
             {
-                return Utils.Combine(new byte[] { (byte)(0xf0 + length) }, RLP.EncodeElement(a), RLP.EncodeElement(b), RLP.EncodeElement(c), RLP.EncodeList(EncodeElementsBytes(d.ToArray())), RLP.EncodeList(EncodeElementsBytes(e.ToArray())), RLP.EncodeList(EncodeElementsBytes(f.ToArray())));
+                return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(a), RLP.EncodeElement(b), RLP.EncodeElement(c), RLP.EncodeList(EncodeElementsBytes(d.ToArray())), RLP.EncodeList(EncodeElementsBytes(e.ToArray())), RLP.EncodeList(EncodeElementsBytes(f.ToArray())));
             }
             else
             {
@@ -53,7 +53,7 @@ namespace CSharp_SDK
             int length = RLP.EncodeElement(origin).Length + RLP.EncodeElement(dest).Length + RLPUtils.EncodeList(from.ToArray()).Length + RLPUtils.EncodeList(signatures.ToArray()).Length + RLP.EncodeElement(to).Length + RLP.EncodeElement(value).Length + RLPUtils.EncodeList(pubkeyHashList.ToArray()).Length;
             if (length < 56)
             {
-                return Utils.Combine(new byte[] { (byte)(0xf0 + length) }, RLP.EncodeElement(origin), RLP.EncodeElement(dest), RLP.EncodeList(EncodeElementsBytes(from.ToArray())), RLP.EncodeList(EncodeElementsBytes(signatures.ToArray())), RLP.EncodeElement(to), RLP.EncodeElement(value), RLP.EncodeList(EncodeElementsBytes(pubkeyHashList.ToArray())));
+                return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(origin), RLP.EncodeElement(dest), RLP.EncodeList(EncodeElementsBytes(from.ToArray())), RLP.EncodeList(EncodeElementsBytes(signatures.ToArray())), RLP.EncodeElement(to), RLP.EncodeElement(value), RLP.EncodeList(EncodeElementsBytes(pubkeyHashList.ToArray())));
             }
             else
             {
