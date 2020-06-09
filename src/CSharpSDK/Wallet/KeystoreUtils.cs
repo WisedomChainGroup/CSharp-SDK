@@ -36,7 +36,15 @@ namespace CSharp_SDK
 
         private static byte[] AddressToPubkeyHashByteArray(string address)
         {
-            byte[] r5 = Base58Check.Decode(address.Substring(2));
+            byte[] r5;
+            if (address.StartsWith("1"))
+            {
+                r5 = Base58Check.Decode(address);
+            }
+            else
+            {
+                r5 = Base58Check.Decode(address.Substring(2));
+            }
             byte[] r2 = Utils.CopyByteArray(r5, 0, 21);
             byte[] r1 = Utils.CopyByteArray(r2, 1, 20);
             return r1;
