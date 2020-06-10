@@ -655,6 +655,7 @@ namespace CSharp_SDK
             }
             byte[] payload = ParsePayloadFromSignRawBasicTransaction(signFirst.HexToByteArray());
             byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+
             Multiple multiple = RLPUtils.DecodeMultiple(newPayload);
             byte[] assetHash = multiple.assetHash;
             int max = multiple.max;
@@ -679,9 +680,10 @@ namespace CSharp_SDK
             }
             List<byte[]> list = multiple.signatures;
             list.Add(sign);
-            byte[] rawTransactionHex = CreateMultipleForRuleSplice(frompubkey, nonce, assetHash, max, min, publicKeyList, list, pubHashList).HexToByteArray();
-            string txHash = Utils.CopyByteArray(rawTransactionHex, 1, 32).ToHex();
-            string traninfo = rawTransactionHex.ToHex();
+            String rawTransactionHex = CreateMultipleForRuleSplice(frompubkey, nonce, assetHash, max, min, publicKeyList, list, pubHashList);
+            byte[] signRawBasicTransactionSign = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            string txHash = Utils.CopyByteArray(signRawBasicTransactionSign, 1, 32).ToHex();
+            string traninfo = signRawBasicTransactionSign.ToHex();
             APIResult result = new APIResult(txHash, traninfo);
             return JsonConvert.SerializeObject(result);
         }
@@ -808,10 +810,10 @@ namespace CSharp_SDK
             msg = Utils.CopyByteArray(msg, 8, msg.Length - 8);
             msg = Utils.CopyByteArray(msg, 8, msg.Length - 8);
             //sig
-            msg = Utils.CopyByteArray(msg, 0, msg.Length - 64);
-            msg = Utils.CopyByteArray(msg, 0, msg.Length - 20);
+            msg = Utils.CopyByteArray(msg, 64, msg.Length - 64);
+            msg = Utils.CopyByteArray(msg, 20, msg.Length - 20);
             byte[] payloadLen = Utils.CopyByteArray(msg, 0, 4);
-            msg = Utils.CopyByteArray(msg, 0, msg.Length - 4);
+            msg = Utils.CopyByteArray(msg, 4, msg.Length - 4);
             return Utils.CopyByteArray(msg, 0, (int)NumericsUtils.decodeUint32(payloadLen));
         }
 

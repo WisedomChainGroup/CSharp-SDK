@@ -35,8 +35,6 @@ namespace CSharp_SDK
         public static Multiple DecodeMultiple(byte[] encodeResult)
         {
             Multiple multiple = new Multiple();
-            byte[] payloadLen = Utils.CopyByteArray(encodeResult, 0, 1);
-            encodeResult = Utils.CopyByteArray(encodeResult, 1, encodeResult.Length - 1);
             var collections = RLP.Decode(encodeResult) as RLPCollection;
             multiple.assetHash = collections[0].RLPData;
             multiple.max = collections[1].RLPData.ToIntFromRLPDecoded();
@@ -65,8 +63,6 @@ namespace CSharp_SDK
         public static MultTransfer DecodeMultTransfer(byte[] encodeResult)
         {
             MultTransfer multTransfer = new MultTransfer();
-            byte[] payloadLen = Utils.CopyByteArray(encodeResult, 0, 1);
-            encodeResult = Utils.CopyByteArray(encodeResult, 1, encodeResult.Length - 1);
             var collections = RLP.Decode(encodeResult) as RLPCollection;
             multTransfer.origin = collections[0].RLPData.ToIntFromRLPDecoded();
             multTransfer.dest = collections[1].RLPData.ToIntFromRLPDecoded();
@@ -81,8 +77,6 @@ namespace CSharp_SDK
         public static Asset DecodeAsset(byte[] encodeResult)
         {
             Asset asset = new Asset();
-            byte[] payloadLen = Utils.CopyByteArray(encodeResult, 0, 1);
-            encodeResult = Utils.CopyByteArray(encodeResult, 1, encodeResult.Length - 1);
             var collections = RLP.Decode(encodeResult) as RLPCollection;
             asset.code = collections[0].RLPData.ToStringFromRLPDecoded();
             asset.offering = collections[1].RLPData.ToLongFromRLPDecoded();
