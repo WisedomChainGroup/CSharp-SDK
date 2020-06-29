@@ -4,6 +4,8 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
 
 namespace CSharp_SDK
 {
@@ -779,7 +781,7 @@ namespace CSharp_SDK
             string rawTransactionHex = CreateMultipleForRuleFirst(fromPubkeyStr, nonce, hash, max, min, new List<byte[]>(), new List<byte[]>(), pubKeyHashList);
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             byte[] sign = ParseSignatureFromSignRawBasicTransaction(signRawBasicTransaction);
-            string rawTransactionHexFirstSign = CreateMultipleForRuleFirst(fromPubkeyStr, nonce, hash, max, min,new List<byte[]>(),new List<byte[]>(){sign} , pubKeyHashList);
+            string rawTransactionHexFirstSign = CreateMultipleForRuleFirst(fromPubkeyStr, nonce, hash, max, min, new List<byte[]>(), new List<byte[]>() { sign }, pubKeyHashList);
             byte[] signRawBasicTransactionSign = SignRawBasicTransaction(rawTransactionHexFirstSign, prikeyStr).HexToByteArray();
             string txHash = Utils.CopyByteArray(signRawBasicTransactionSign, 1, 32).ToHex();
             string traninfo = signRawBasicTransactionSign.ToHex();
@@ -1250,11 +1252,11 @@ namespace CSharp_SDK
 
         public static string ClientToTransferAccount(string fromPubkeyStr, string toPubkeyHashStr, BigDecimal amount, string prikeyStr, long nonce)
         {
-            String rawTransactionHex = CreateRawTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce);
+            string rawTransactionHex = CreateRawTransaction(fromPubkeyStr, toPubkeyHashStr, amount, nonce);
             byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
             byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
-            String txHash = hash.ToHex();
-            String traninfo = signRawBasicTransaction.ToHex();
+            string txHash = hash.ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
             APIResult result = new APIResult(txHash, traninfo);
             return JsonConvert.SerializeObject(result);
         }
@@ -1321,6 +1323,74 @@ namespace CSharp_SDK
 
             BigDecimal divide = BigDecimal.Divide(b, a);
             return divide.ToLong();
+        }
+
+        public static string CreateRateHeightLockRule(string fromPubkeyStr, long nonce, byte[] assetHash, long onetimeDepositMultiple, int withdrawPeriodHeight, string withdrawRate, byte[] dest)
+        {
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            byte[] type = new byte[1];
+            type[0] = 0x07;
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            string toPubkeyHashStr = "0000000000000000000000000000000000000000";
+            byte[] toPubkeyHash = toPubkeyHashStr.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeRateHeightLock(assetHash, onetimeDepositMultiple, withdrawPeriodHeight, withdrawRate, dest, new Dictionary<byte[], Extract>());
+            byte[] payloadlen = NumericsUtils.encodeUint32(payload.Length);
+            byte[] allPayload = Utils.Combine(payloadlen, new byte[] { 0x04 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return new string(rawTransaction.ToHex());
+        }
+
+        public static string CreateRateHeightLockRuleForDeploy(String fromPubkeyStr, String prikeyStr, long nonce, string assetHash, BigDecimal onetimeDepositMultiple, int withdrawPeriodHeight, String withdrawRate, String dest)
+        {
+            byte[] assetHashByte;
+            if (assetHash.Equals("0000000000000000000000000000000000000000"))
+            {
+                assetHashByte = RipemdManager.getHash(assetHash.HexToByteArray());
+            }
+            else
+            {
+                assetHashByte = assetHash.HexToByteArray();
+            }
+            BigDecimal compare = new BigDecimal(100000000L);
+            if (onetimeDepositMultiple.CompareTo(compare) > 0 || new BigDecimal(onetimeDepositMultiple.ToLong()).CompareTo(onetimeDepositMultiple) != 0
+                                    || onetimeDepositMultiple.CompareTo(BigDecimal.One) <= 0)
+            {
+                return "transfer in money is wrong";
+            }
+            BigDecimal withdrawPeriodHeightBig = new BigDecimal(withdrawPeriodHeight);
+            if (new BigDecimal(withdrawPeriodHeightBig.ToLong()).CompareTo(withdrawPeriodHeightBig) != 0 || withdrawPeriodHeightBig.CompareTo(BigDecimal.Zero) <= 0
+                        || withdrawPeriodHeightBig.CompareTo(new BigDecimal(Int64.MaxValue)) > 0)
+            {
+                return "withdraw period height is wrong";
+            }
+            BigDecimal molecule = new BigDecimal(100);
+            BigDecimal with = decimal.Parse(withdrawRate);
+            BigDecimal product = BigDecimal.Multiply(onetimeDepositMultiple, new BigDecimal(rate));
+            string plain = string.Format("{0:G29}", with);
+            int index = plain.IndexOf(".");
+            index = index < 0 ? 0 : plain.Length - index - 1;
+            if (with.CompareTo(molecule) > 0 || with.CompareTo(BigDecimal.Zero) <= 0 || new BigDecimal(BigDecimal.Divide(BigDecimal.Multiply(onetimeDepositMultiple, with), molecule).ToLong()).CompareTo(BigDecimal.Divide(BigDecimal.Multiply(onetimeDepositMultiple, with), molecule)) != 0
+                || (BigInteger.ValueOf(product.ToLong()).DivideAndRemainder(BigInteger.ValueOf(BigDecimal.Multiply(onetimeDepositMultiple, with).ToLong()))[1]) != BigInteger.Zero || index > 6)
+            {
+                return "extract rate is wrong";
+            }
+            long onetimeDepositMultipleLong = onetimeDepositMultiple.ToLong();
+            byte[] destByte = dest.HexToByteArray();
+            string withString = BigDecimal.Divide(with, new BigDecimal(100)).ToString();
+            string rawTransactionHex = CreateRateHeightLockRule(fromPubkeyStr, nonce, assetHashByte, onetimeDepositMultipleLong, withdrawPeriodHeight, withString, destByte);
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            String txHash = hash.ToHex();
+            String traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
         }
 
     }
