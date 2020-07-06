@@ -62,5 +62,35 @@ namespace CSharp_SDK
             return epuk.GetEncoded().ToHex();
         }
 
+        public static int VerifyAddress(String address)
+        {
+            if (!address.StartsWith("1") && !address.StartsWith("WX") && !address.StartsWith("WR"))
+            {
+                return -1;
+            }
+            byte[] r5;
+            if (address.StartsWith("1"))
+            {
+                r5 = Base58Check.Decode(address);
+            }
+            else
+            {
+                r5 = Base58Check.Decode(address.Substring(2));
+            }
+            Sha3Keccack sha3Keccack = Sha3Keccack.Current;
+            byte[] r3 = sha3Keccack.CalculateHash(sha3Keccack.CalculateHash(AddressToPubkeyHashByteArray(address)));
+            byte[] b4 = Utils.CopyByteArray(r3, 0, 4);
+            byte[] _b4 = Utils.CopyByteArray(r5, r5.Length - 4, 4);
+            if (Array.Equals(b4, _b4))
+            {
+                return 0;
+            }
+            else
+            {
+                return -2;
+            }
+        }
+
+
     }
 }
