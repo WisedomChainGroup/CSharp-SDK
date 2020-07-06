@@ -16,6 +16,35 @@ namespace CSharp_SDK
 
         private static long rate = 100000000L;
 
+
+        public static string getRateHeightLockDeposit(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            long value = RLP.Decode(newPayload).RLPData.ToLongFromRLPDecoded();
+            JObject json = new JObject { { "value", value } };
+            return json.ToString();
+        }
+
+        public static string getRateHeightLockWithdraw(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            RateHeightLockWithdraw rateHeightLockWithdraw = RLPUtils.DecodeRateHeightLockWithdraw(newPayload);
+            JObject json = new JObject { { "depositHash", rateHeightLockWithdraw.depositHash.ToHex() }, { "to", rateHeightLockWithdraw.to.ToHex() } };
+            return json.ToString();
+        }
+
+        public static string getRateHeightLock(byte[] payload)
+        {
+            byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
+            RateHeightLock rateHeightLock = RLPUtils.DecodeRateHeightLock(newPayload);
+            JObject json = new JObject { 
+                { "assetHash", rateHeightLock.assetHash.ToHex() },  { "oneTimeDepositMultiple", rateHeightLock.oneTimeDepositMultiple },
+                {"withDrawPeriodHeight",rateHeightLock.withDrawPeriodHeight},   {"withDrawRate",rateHeightLock.withDrawRate},
+                {"dest",rateHeightLock.dest.ToHex()},   {"stateMap",rateHeightLock.stateMap.ToString()}
+             };
+            return json.ToString();
+        }
+
         public static string GetHashTimeBlock(byte[] payload)
         {
             byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
@@ -1515,7 +1544,7 @@ namespace CSharp_SDK
             return JsonConvert.SerializeObject(result);
         }
 
-         public static string CreateRateHeightLockWithdrawRuleAsHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] depositHash, byte[] to)
+        public static string CreateRateHeightLockWithdrawRuleAsHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] depositHash, byte[] to)
         {
             byte[] version = new byte[1];
             version[0] = 0x01;
@@ -1535,7 +1564,7 @@ namespace CSharp_SDK
             return new string(rawTransaction.ToHex());
         }
 
-         public static string CreateRateHeightLockWithdrawRuleForDeployAsHash160(string fromPubkeyStr, string txHash160, string prikeyStr, long nonce, string depositHash, string to)
+        public static string CreateRateHeightLockWithdrawRuleForDeployAsHash160(string fromPubkeyStr, string txHash160, string prikeyStr, long nonce, string depositHash, string to)
         {
             if (string.IsNullOrEmpty(depositHash) || string.IsNullOrEmpty(to))
             {
@@ -1549,8 +1578,6 @@ namespace CSharp_SDK
             APIResult result = new APIResult(txHash, traninfo);
             return JsonConvert.SerializeObject(result);
         }
-
-
 
     }
 

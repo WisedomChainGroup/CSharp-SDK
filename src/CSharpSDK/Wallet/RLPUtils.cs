@@ -163,6 +163,16 @@ namespace CSharp_SDK
                 return Utils.Combine(new byte[] { (byte)(0xf7 + tuple.Item1) }, tuple.Item2, RLP.EncodeElement(depositHash), RLP.EncodeElement(to));
             }
         }
+
+        public static RateHeightLockWithdraw DecodeRateHeightLockWithdraw(byte[] encodeResult)
+        {
+            RateHeightLockWithdraw rateHeightLockWithdraw = new RateHeightLockWithdraw();
+            var collections = RLP.Decode(encodeResult) as RLPCollection;
+            rateHeightLockWithdraw.depositHash = collections[0].RLPData;
+            rateHeightLockWithdraw.to = collections[1].RLPData;
+            return rateHeightLockWithdraw;
+        }
+
     }
 
 }
