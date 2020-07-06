@@ -62,6 +62,13 @@ namespace CSharp_SDK
             return epuk.GetEncoded().ToHex();
         }
 
+        public static string PublicKeyToPublicKeyHash(string publicKey)
+        {
+            byte[] pub256 = Sha3Keccack.Current.CalculateHash(publicKey.HexToByteArray());
+            byte[] r1 = RipemdManager.getHash(pub256);
+            return r1.ToHex();
+        }
+
         public static int VerifyAddress(String address)
         {
             if (!address.StartsWith("1") && !address.StartsWith("WX") && !address.StartsWith("WR"))

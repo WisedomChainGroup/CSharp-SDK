@@ -48,6 +48,45 @@ namespace CSharp_SDK
             }
         }
 
+        public static string keystoreToAddress(string ksJson)
+        {
+            Keystore ks = (Keystore)JsonConvert.DeserializeObject(ksJson);
+            return ks.address;
+        }
+
+        public static string keystoreToPubkey(string ksJson, string password)
+        {
+            Keystore ks = (Keystore)JsonConvert.DeserializeObject(ksJson);
+            string privateKey = ObtainPrikey(ks, password);
+            return KeystoreUtils.PrivatekeyToPublicKey(privateKey);
+        }
+
+        public static string KeystoreToPubKeyHash(string ksJson, string password)
+        {
+            string publicKey = keystoreToPubkey(ksJson, password);
+            return KeystoreUtils.PublicKeyToPublicKeyHash(publicKey);
+        }
+
+        public static string ObtainPrikey(Keystore ks, string password)
+        {
+            if (!verifyPassword(ks, password))
+            {
+                return "invalid password";
+            }
+            byte[] derivedKey = Argon2Manager.Current.hash(System.Text.Encoding.ASCII.GetBytes(password), ks.kdfparams.salt.HexToByteArray());
+            byte[] iv = ks.crypto.cipherparams.iv.HexToByteArray();
+            return AesManager.Current.Decryptdata(derivedKey, ks.crypto.ciphertext.HexToByteArray(), iv).ToHex();
+        }
+
+        public static bool verifyPassword(Keystore keystore, string password)
+        {
+            byte[] derivedKey = Argon2Manager.Current.hash(System.Text.Encoding.ASCII.GetBytes(password), keystore.kdfparams.salt.HexToByteArray());
+            byte[] cipherPriKey = keystore.crypto.ciphertext.HexToByteArray();
+            Sha3Keccack sha3Keccack = Sha3Keccack.Current;
+            byte[] mac = sha3Keccack.CalculateHash(Utils.Combine(derivedKey, cipherPriKey));
+            return mac.ToHex().Equals(keystore.mac);
+        }
+
     }
 }
 
