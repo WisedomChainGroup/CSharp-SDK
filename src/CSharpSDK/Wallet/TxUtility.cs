@@ -1456,7 +1456,7 @@ namespace CSharp_SDK
             return new string(rawTransaction.ToHex());
         }
 
-        
+
         public static string CreateRateHeightLockDepositRuleForDeployAsHash160(string fromPubkeyStr, string prikeyStr, string txHash160, long nonce, BigDecimal value)
         {
             value = BigDecimal.Multiply(value, new BigDecimal(rate));
@@ -1480,7 +1480,77 @@ namespace CSharp_SDK
             return JsonConvert.SerializeObject(result);
         }
 
-        
+        public static string CreateRateHeightLockWithdrawRule(string fromPubkeyStr, string txHash, long nonce, byte[] depositHash, byte[] to)
+        {
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            byte[] signull = new byte[64];
+            byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeRateHeightLockWithdraw(depositHash, to);
+            byte[] payloadlen = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payloadlen, new byte[] { 0x09 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return new string(rawTransaction.ToHex());
+        }
+
+        public static string CreateRateHeightLockWithdrawRuleForDeploy(string fromPubkeyStr, string txHashCreate, string prikeyStr, long nonce, string depositHash, string to)
+        {
+            if (string.IsNullOrEmpty(depositHash) || string.IsNullOrEmpty(to))
+            {
+                return "depositHash or to can not be null";
+            }
+            string rawTransactionHex = CreateRateHeightLockWithdrawRule(fromPubkeyStr, txHashCreate, nonce, depositHash.HexToByteArray(), to.HexToByteArray());
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            string txHash = hash.ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+         public static string CreateRateHeightLockWithdrawRuleAsHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] depositHash, byte[] to)
+        {
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            byte[] signull = new byte[64];
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeRateHeightLockWithdraw(depositHash, to);
+            byte[] payloadlen = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payloadlen, new byte[] { 0x09 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return new string(rawTransaction.ToHex());
+        }
+
+         public static string CreateRateHeightLockWithdrawRuleForDeployAsHash160(string fromPubkeyStr, string txHash160, string prikeyStr, long nonce, string depositHash, string to)
+        {
+            if (string.IsNullOrEmpty(depositHash) || string.IsNullOrEmpty(to))
+            {
+                return "depositHash or to can not be null";
+            }
+            string rawTransactionHex = CreateRateHeightLockWithdrawRuleAsHash160(fromPubkeyStr, txHash160, nonce, depositHash.HexToByteArray(), to.HexToByteArray());
+            byte[] signRawBasicTransaction = SignRawBasicTransaction(rawTransactionHex, prikeyStr).HexToByteArray();
+            byte[] hash = Utils.CopyByteArray(signRawBasicTransaction, 1, 32);
+            string txHash = hash.ToHex();
+            string traninfo = signRawBasicTransaction.ToHex();
+            APIResult result = new APIResult(txHash, traninfo);
+            return JsonConvert.SerializeObject(result);
+        }
+
+
 
     }
 

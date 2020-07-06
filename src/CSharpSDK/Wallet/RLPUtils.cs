@@ -149,6 +149,20 @@ namespace CSharp_SDK
             rateHeightLock.stateMap = dictionary;
             return rateHeightLock;
         }
+
+        public static byte[] EncodeRateHeightLockWithdraw(byte[] depositHash, byte[] to)
+        {
+            int length = RLP.EncodeElement(depositHash).Length + RLP.EncodeElement(to).Length;
+            if (length < 56)
+            {
+                return Utils.Combine(new byte[] { (byte)(0xc0 + length) }, RLP.EncodeElement(depositHash), RLP.EncodeElement(to));
+            }
+            else
+            {
+                Tuple<byte, byte[]> tuple = NumericsUtils.getLengthByte(length);
+                return Utils.Combine(new byte[] { (byte)(0xf7 + tuple.Item1) }, tuple.Item2, RLP.EncodeElement(depositHash), RLP.EncodeElement(to));
+            }
+        }
     }
 
 }
