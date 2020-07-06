@@ -7,9 +7,9 @@ namespace CSharp_SDK
     public class KeystoreUtils
     {
 
-        private static String t = "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec";
+        private static string t = "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec";
 
-        public static String PubkeyToAddress(byte[] pubkey)
+        public static string PubkeyToAddress(byte[] pubkey)
         {
             Sha3Keccack sha3Keccack = Sha3Keccack.Current;
             byte[] pub256 = sha3Keccack.CalculateHash(pubkey);
@@ -25,7 +25,7 @@ namespace CSharp_SDK
             byte[] r3 = sha3Keccack.CalculateHash(sha3Keccack.CalculateHash(r1));
             byte[] b4 = Utils.CopyByteArray(r3, 0, 4);
             byte[] b5 = Utils.Combine(r2, b4);
-            String s6 = "WX" + Base58Check.Encode(b5);
+            string s6 = "WX" + Base58Check.Encode(b5);
             return s6;
         }
 
@@ -97,7 +97,6 @@ namespace CSharp_SDK
                 return -2;
             }
         }
-
 
     }
 }

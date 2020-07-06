@@ -37,7 +37,7 @@ namespace CSharp_SDK
         {
             byte[] newPayload = Utils.CopyByteArray(payload, 1, payload.Length - 1);
             RateHeightLock rateHeightLock = RLPUtils.DecodeRateHeightLock(newPayload);
-            JObject json = new JObject { 
+            JObject json = new JObject {
                 { "assetHash", rateHeightLock.assetHash.ToHex() },  { "oneTimeDepositMultiple", rateHeightLock.oneTimeDepositMultiple },
                 {"withDrawPeriodHeight",rateHeightLock.withDrawPeriodHeight},   {"withDrawRate",rateHeightLock.withDrawRate},
                 {"dest",rateHeightLock.dest.ToHex()},   {"stateMap",rateHeightLock.stateMap.ToString()}
@@ -231,6 +231,46 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
+        public static string HashHeightBlockTransferForDeployAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, BigDecimal amount, byte[] hashResult, BigDecimal blockHeight)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            if (blockHeight.CompareTo(BigDecimal.Zero) < 0)
+            {
+                JObject json = new JObject { { "message", "block height must be positive long number" } };
+                return json.ToString();
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
+            //构造payload
+            byte[] payload = RLPUtils.EncodeList(amount.ToLong().ToBytesForRLPEncoding(), hashResult, blockHeight.ToLong().ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x06 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateHashHeightBlockGetForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, string transferHash, string originText)
         {
             if (originText.Equals(""))
@@ -274,6 +314,33 @@ namespace CSharp_SDK
             byte[] signull = new byte[64];
             //接收者公钥哈希
             byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x07 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string HashHeightBlockGetForDeployAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] transferHash, string originText)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
             byte[] payload = RLPUtils.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x07 }, payload);
@@ -388,6 +455,40 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
+        public static string HashTimeBlockTransferForDeployAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, BigDecimal amount, byte[] hashResult, BigDecimal timestamp)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希,填0
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeList(amount.ToLong().ToBytesForRLPEncoding(), hashResult, timestamp.ToLong().ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x04 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateHashTimeBlockGetForDeploy(string fromPubkeyStr, string prikeyStr, string txGetHash, long nonce, string transferHash, string originText)
         {
             if (originText.Equals(""))
@@ -430,6 +531,33 @@ namespace CSharp_SDK
             byte[] signull = new byte[64];
             //部署事务的事务哈希
             byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x05 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string HashTimeBlockGetForDeployAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] transferHash, string originText)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //部署事务的事务哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
             byte[] payload = RLPUtils.EncodeList(transferHash, originText.ToBytesForRLPEncoding());
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x05 }, payload);
@@ -569,6 +697,33 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
+        public static string CreateMultiSignatureForTransferSpliceAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, int origin, int dest, List<byte[]> from, List<byte[]> signatures, byte[] to, BigDecimal amount, List<byte[]> pubkeyHashList)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeMultTransfer(origin.ToBytesForRLPEncoding(), dest.ToBytesForRLPEncoding(), from, signatures, to, amount.ToLong().ToBytesForRLPEncoding(), pubkeyHashList);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateMultiSignatureToDeployForRuleOther(string fromPubkeyStr, string pubkeyFirstSign, string prikeyStr, bool isPutSign)
         {
             byte[] signRawBasicTransaction = SignRawBasicTransactionAndIsSign(pubkeyFirstSign, prikeyStr, isPutSign).HexToByteArray();
@@ -667,6 +822,40 @@ namespace CSharp_SDK
             byte[] signull = new byte[64];
             //接收者公钥哈希
             byte[] toPubkeyHash = RipemdManager.getHash(txHash.HexToByteArray());
+            byte[] payload = RLPUtils.EncodeMultTransfer(origin.ToBytesForRLPEncoding(), dest.ToBytesForRLPEncoding(), from, signatures, to, amount.ToLong().ToBytesForRLPEncoding(), pubkeyHashList);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateMultiSignatureForTransferFirstAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, int origin, int dest, List<byte[]> from, List<byte[]> signatures, byte[] to, BigDecimal amount, List<byte[]> pubkeyHashList)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
             byte[] payload = RLPUtils.EncodeMultTransfer(origin.ToBytesForRLPEncoding(), dest.ToBytesForRLPEncoding(), from, signatures, to, amount.ToLong().ToBytesForRLPEncoding(), pubkeyHashList);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x03 }, payload);
@@ -914,6 +1103,33 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
+        public static string CreateDeployForRuleAssetTransferAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] from, byte[] to, BigDecimal amount)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeList(from, to, BigDecimal.Multiply(amount, new BigDecimal(rate)).ToLong().ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x01 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
         public static string CreateSignToDeployForRuleAssetIncreased(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, BigDecimal amount)
         {
             string rawTransactionHex = CreateCallForRuleAssetIncreased(fromPubkeyStr, tranTxHash, nonce, amount);
@@ -964,6 +1180,40 @@ namespace CSharp_SDK
             return rawTransaction.ToHex();
         }
 
+        public static string CreateCallForRuleAssetIncreasedAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, BigDecimal amount)
+        {
+            amount = BigDecimal.Multiply(amount, new BigDecimal(rate));
+
+            Tuple<bool, string> tupleAmount = JudgeBigDecimalIsValid(amount, "amount");
+            if (!tupleAmount.Item1)
+            {
+                return tupleAmount.Item2;
+            }
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0x08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] shareAmount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
+            byte[] payload = RLPUtils.EncodeList(amount.ToLong().ToBytesForRLPEncoding());
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x02 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, shareAmount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
 
         public static string CreateSignToDeployforAssetChangeOwner(string fromPubkeyStr, string tranTxHash, string prikeyStr, long nonce, string newOwner)
         {
@@ -1006,6 +1256,33 @@ namespace CSharp_SDK
             //接收者公钥哈希
             byte[] hash = txHash.HexToByteArray();
             byte[] toPubkeyHash = RipemdManager.getHash(hash);
+            byte[] payload = RLPUtils.EncodeList(newOwner);
+            byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
+            byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x00 }, payload);
+            byte[] rawTransaction = Utils.Combine(version, type, newNonce, fromPubkeyHash, gasPrice, Amount, signull, toPubkeyHash, allPayload);
+            return rawTransaction.ToHex();
+        }
+
+        public static string CreateCallForRuleAssetChangeOwnerAsTxHash160(string fromPubkeyStr, string txHash160, long nonce, byte[] newOwner)
+        {
+            //版本号
+            byte[] version = new byte[1];
+            version[0] = 0x01;
+            //类型
+            byte[] type = new byte[1];
+            type[0] = 0X08;
+            //Nonce 无符号64位
+            byte[] newNonce = NumericsUtils.encodeUint64(nonce + 1);
+            //签发者公钥哈希 20字节
+            byte[] fromPubkeyHash = fromPubkeyStr.HexToByteArray();
+            //gas单价
+            byte[] gasPrice = NumericsUtils.encodeUint64(obtainServiceCharge(100000L, serviceCharge));
+            //分享收益 无符号64位
+            byte[] Amount = NumericsUtils.encodeUint64(0);
+            //为签名留白
+            byte[] signull = new byte[64];
+            //接收者公钥哈希
+            byte[] toPubkeyHash = txHash160.HexToByteArray();
             byte[] payload = RLPUtils.EncodeList(newOwner);
             byte[] payLoadLength = NumericsUtils.encodeUint32(payload.Length + 1);
             byte[] allPayload = Utils.Combine(payLoadLength, new byte[] { 0x00 }, payload);
